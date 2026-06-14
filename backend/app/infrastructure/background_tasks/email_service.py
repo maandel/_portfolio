@@ -3,14 +3,14 @@ import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
-from app.infrastructure.celery.worker import celery_app
+from fastapi import BackgroundTasks
+from app.domain.interfaces import IEmailService
 from app.infrastructure.config.settings import settings
 
 logger = logging.getLogger(__name__)
 
 
-@celery_app.task(name="app.infrastructure.celery.tasks.send_otp_email_task")
-def send_otp_email_task(email: str, otp: str) -> str:
+def send_otp_email_sync(email: str, otp: str) -> str:
     subject = "Portfolio Admin - Password Reset OTP"
     body = f"""
     <h2>Password Reset Request</h2>
@@ -58,10 +58,7 @@ def send_otp_email_task(email: str, otp: str) -> str:
         return f"Logged OTP email to {email} (SMTP fallback completed)"
 
 
-@celery_app.task(
-    name="app.infrastructure.celery.tasks.send_contact_email_task",
-)
-def send_contact_email_task(name: str, email: str, message: str) -> str:
+def send_contact_email_sync(name: str, email: str, message: str) -> str:
     subject = f"Portfolio Contact Form: Message from {name}"
     body = f"""
     <h2>New Portfolio Contact Form Message</h2>
@@ -102,3 +99,19 @@ def send_contact_email_task(name: str, email: str, message: str) -> str:
         print(f"MESSAGE: {message}")
         print("=" * 50 + "\n")
         return f"Logged contact email from {name} ({email}) (SMTP fallback)"
+
+
+class BackgroundTasksEmailService(IEmailService):
+    def __init__(self, background_tasks: BackgroundTasks):
+        self.background_tasks = background_tasks
+
+    async def send_otp(self, email: str, otp: str) -> None:
+        self.background_tasks.add_task(send_otp_email_sync, email, otp)
+
+    async def send_contact_message(
+        self,
+        name: str,
+        email: str,
+        message: str,
+    ) -> None:
+        self.background_tasks.add_task(send_contact_email_sync, name, email, message)

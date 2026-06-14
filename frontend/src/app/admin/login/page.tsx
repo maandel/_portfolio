@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Terminal, Lock, Mail, ArrowRight, ShieldAlert } from "lucide-react";
+import { Terminal, Lock, Mail, ArrowRight, ShieldAlert, ShieldCheck } from "lucide-react";
 import * as api from "@/lib/api";
 import ThemeToggle from "@/components/ThemeToggle";
 
@@ -13,6 +13,7 @@ export default function AdminLogin() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
 
   useEffect(() => {
     if (localStorage.getItem("admin_token")) {
@@ -23,6 +24,7 @@ export default function AdminLogin() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    setSuccess("");
     setLoading(true);
 
     try {
@@ -30,10 +32,12 @@ export default function AdminLogin() {
       localStorage.setItem("admin_token", data.access_token);
       localStorage.setItem("admin_refresh_token", data.refresh_token);
       localStorage.setItem("admin_email", email);
-      router.push("/admin/dashboard");
+      setSuccess("Authentication successful! Redirecting to secure dashboard...");
+      setTimeout(() => {
+        router.push("/admin/dashboard");
+      }, 1200);
     } catch (err: any) {
       setError(err.message || "Failed to log in. Check credentials.");
-    } finally {
       setLoading(false);
     }
   };
@@ -64,6 +68,13 @@ export default function AdminLogin() {
             </div>
           )}
 
+          {success && (
+            <div className="p-3 bg-green-500/10 border border-green-500/20 text-green-500 rounded-lg text-xs font-mono flex items-start space-x-2">
+              <ShieldCheck className="w-4 h-4 mt-0.5 shrink-0" />
+              <span>{success}</span>
+            </div>
+          )}
+
           <form onSubmit={handleLogin} className="space-y-4 font-mono text-sm">
             <div className="space-y-1">
               <label htmlFor="email" className="block text-xs uppercase text-text-muted font-bold">Email Address</label>
@@ -77,7 +88,8 @@ export default function AdminLogin() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="admin@mandell.tech"
-                  className="w-full bg-background border border-card-border rounded-lg pl-10 pr-4 py-3 focus:outline-none focus:border-primary-500 font-sans text-sm"
+                  className="w-full bg-background border border-card-border rounded-lg pl-10 pr-4 py-3 focus:outline-none focus:border-primary-500 font-sans text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={loading}
                   required
                 />
               </div>
@@ -100,7 +112,8 @@ export default function AdminLogin() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full bg-background border border-card-border rounded-lg pl-10 pr-4 py-3 focus:outline-none focus:border-primary-500 font-sans text-sm"
+                  className="w-full bg-background border border-card-border rounded-lg pl-10 pr-4 py-3 focus:outline-none focus:border-primary-500 font-sans text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={loading}
                   required
                 />
               </div>
@@ -122,11 +135,8 @@ export default function AdminLogin() {
             </button>
           </form>
 
-          <div className="text-center font-mono text-xs text-text-muted border-t border-card-border pt-4">
-            Need a secure login?{" "}
-            <Link href="/admin/signup" className="text-primary-500 hover:underline">
-              register_account
-            </Link>
+          <div className="text-center font-mono text-[10px] text-text-muted border-t border-card-border pt-4">
+            First administrator? Seed account via system environment keys.
           </div>
         </div>
       </div>

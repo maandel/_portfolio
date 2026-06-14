@@ -17,6 +17,32 @@ class IUserRepository(ABC):
     async def update_password(self, email: str, hashed_password: str) -> User:
         pass
 
+    @abstractmethod
+    async def list_users(self) -> List[User]:
+        pass
+
+    @abstractmethod
+    async def update_status(
+        self,
+        user_id: int,
+        is_active: bool,
+    ) -> Optional[User]:
+        pass
+
+    @abstractmethod
+    async def update_user(
+        self,
+        user_id: int,
+        email: Optional[str] = None,
+        hashed_password: Optional[str] = None,
+        is_admin: Optional[bool] = None,
+    ) -> Optional[User]:
+        pass
+
+    @abstractmethod
+    async def delete_user(self, user_id: int) -> bool:
+        pass
+
 
 class IPortfolioRepository(ABC):
     @abstractmethod

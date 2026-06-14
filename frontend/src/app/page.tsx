@@ -81,6 +81,7 @@ export default function Home() {
   const [experiences, setExperiences] = useState(DEFAULT_EXPERIENCES);
   const [projects, setProjects] = useState(DEFAULT_PROJECTS);
   const [techs, setTechs] = useState(DEFAULT_TECHS);
+  const [isLoading, setIsLoading] = useState(true);
 
   const [contactName, setContactName] = useState("");
   const [contactEmail, setContactEmail] = useState("");
@@ -109,9 +110,45 @@ export default function Home() {
         const techData = await api.getTechnologies();
         if (techData.length > 0) setTechs(techData);
       } catch (err) { console.log("Using fallback technologies", err); }
+
+      setIsLoading(false);
     }
     loadData();
   }, []);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center font-mono text-cyber-green relative overflow-hidden select-none">
+        {/* Subtle grid background */}
+        <div className="absolute inset-0 grid-bg opacity-10 pointer-events-none" />
+        
+        {/* Animated Cyber-circles */}
+        <div className="absolute w-[400px] h-[400px] rounded-full border border-cyber-green/5 animate-pulse" />
+        <div className="absolute w-[600px] h-[600px] rounded-full border border-cyber-green/[0.02] animate-spin [animation-duration:60s]" />
+
+        <div className="relative space-y-6 text-center z-10 max-w-sm px-6">
+          <div className="flex items-center justify-center space-x-3 text-sm tracking-widest font-bold">
+            <Terminal className="w-5 h-5 animate-pulse text-cyber-green" />
+            <span className="animate-pulse">INITIALISING_SYSTEM...</span>
+          </div>
+
+          <div className="w-64 h-1.5 bg-slate-900 border border-card-border/50 rounded-full overflow-hidden relative">
+            <motion.div 
+              initial={{ width: "0%" }}
+              animate={{ width: "100%" }}
+              transition={{ duration: 1.2, ease: "easeInOut" }}
+              className="h-full bg-primary-500 rounded-full shadow-[0_0_8px_rgba(244,63,94,0.6)]" 
+            />
+          </div>
+
+          <div className="text-[10px] text-text-muted flex flex-col space-y-1">
+            <span>connecting to database engine...</span>
+            <span className="text-cyber-green/60">handshake_established: ok</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const handleContactSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -258,8 +295,8 @@ export default function Home() {
                 <button
                   onClick={() => setActiveTab("profile")}
                   className={`px-3 py-2 cursor-pointer transition-colors border-b-2 font-medium ${activeTab === "profile"
-                      ? "border-primary-500 text-foreground bg-terminal-bg/30"
-                      : "border-transparent text-text-muted hover:text-foreground"
+                    ? "border-primary-500 text-foreground bg-terminal-bg/30"
+                    : "border-transparent text-text-muted hover:text-foreground"
                     }`}
                 >
                   profile.json
@@ -267,8 +304,8 @@ export default function Home() {
                 <button
                   onClick={() => setActiveTab("architecture")}
                   className={`px-3 py-2 cursor-pointer transition-colors border-b-2 font-medium ${activeTab === "architecture"
-                      ? "border-primary-500 text-foreground bg-terminal-bg/30"
-                      : "border-transparent text-text-muted hover:text-foreground"
+                    ? "border-primary-500 text-foreground bg-terminal-bg/30"
+                    : "border-transparent text-text-muted hover:text-foreground"
                     }`}
                 >
                   architecture.py
@@ -276,8 +313,8 @@ export default function Home() {
                 <button
                   onClick={() => setActiveTab("logs")}
                   className={`px-3 py-2 cursor-pointer transition-colors border-b-2 font-medium ${activeTab === "logs"
-                      ? "border-primary-500 text-foreground bg-terminal-bg/30"
-                      : "border-transparent text-text-muted hover:text-foreground"
+                    ? "border-primary-500 text-foreground bg-terminal-bg/30"
+                    : "border-transparent text-text-muted hover:text-foreground"
                     }`}
                 >
                   system_status.sh
@@ -293,7 +330,7 @@ export default function Home() {
   "role": "${bio.title}",
   "stack": {
     "languages": ["Python", "JavaScript", "SQL"],
-    "frameworks": ["FastAPI", "React", "Next.js"],
+    "frameworks": ["FastAPI", "Django", "Fastapi", "React", "Next.js"],
     "infrastructure": ["PostgreSQL", "Redis", "Celery", "Docker"]
   },
   "contact": {
@@ -306,9 +343,7 @@ export default function Home() {
 
                 {activeTab === "architecture" && (
                   <pre className="text-cyan-400">
-                    {`# Strict Clean Architecture Architecture Definition
-
-class UseCase(IInteractor):
+                    {`class UseCase(IInteractor):
     def __init__(self, repo: IRepository, cache: ICache):
         self.repo = repo
         self.cache = cache
@@ -578,10 +613,10 @@ class UseCase(IInteractor):
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     className={`p-4 rounded-lg font-mono text-xs flex items-start space-x-2 ${formStatus === "success"
-                        ? "bg-green-500/10 text-green-500 border border-green-500/20"
-                        : formStatus === "error"
-                          ? "bg-red-500/10 text-red-500 border border-red-500/20"
-                          : "bg-primary-500/10 text-primary-500 border border-primary-500/20"
+                      ? "bg-green-500/10 text-green-500 border border-green-500/20"
+                      : formStatus === "error"
+                        ? "bg-red-500/10 text-red-500 border border-red-500/20"
+                        : "bg-primary-500/10 text-primary-500 border border-primary-500/20"
                       }`}
                   >
                     {formStatus === "success" && <CheckCircle className="w-4 h-4 mt-0.5 shrink-0" />}

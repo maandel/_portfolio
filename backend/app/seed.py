@@ -1,6 +1,8 @@
 import logging
 import secrets
 
+from sqlalchemy.future import select
+
 from app.infrastructure.config.settings import settings
 from app.infrastructure.db.models import (
     BioDb,
@@ -11,7 +13,6 @@ from app.infrastructure.db.models import (
 )
 from app.infrastructure.db.session import async_session_maker
 from app.use_cases.auth_use_cases import hash_password
-from sqlalchemy.future import select
 
 logger = logging.getLogger(__name__)
 
@@ -36,12 +37,12 @@ async def seed_database():
                 admin_password = secrets.token_urlsafe(16)
                 logger.warning("=" * 60)
                 logger.warning(
-                    "ADMIN PASSWORD NOT SPECIFIED. GENERATING SECURE RANDOM PASSWORD:"
+                    "ADMIN PASSWORD NOT SPECIFIED. GENERATING SECURE RANDOM PASSWORD:"  # noqa: E501
                 )
                 logger.warning(f"  EMAIL:    {admin_email}")
                 logger.warning(f"  PASSWORD: {admin_password}")
                 logger.warning(
-                    "Please copy these credentials. They will not be displayed again."
+                    "Please copy these credentials. They will not be displayed again."  # noqa: E501
                 )
                 logger.warning("=" * 60)
 
@@ -56,13 +57,16 @@ async def seed_database():
             default_bio = BioDb(
                 name="Developer Mandell",
                 title="Senior Backend Engineer & Systems Architect",
-                about_me="Dedicated to crafting robust API designs, high-throughput systems, and clean architectural patterns. Deeply specialized in Python, asyncio, relational databases, caching, and task queues.",
+                about_me="Dedicated to crafting robust API designs, "
+                "high-throughput systems, and clean architectural patterns. "
+                "Deeply specialized in Python, asyncio, relational databases, "
+                "caching, and task queues.",
                 email=admin_email,
                 resume_url="#",
                 github_url="https://github.com",
                 linkedin_url="https://linkedin.com",
                 twitter_url="https://twitter.com",
-                avatar_url="https://images.unsplash.com/photo-1618401471353-b98aedd07871?q=80&w=300&h=300&fit=crop",
+                avatar_url="https://images.unsplash.com/photo-1618401471353-b98aedd07871?q=80&w=300&h=300&fit=crop",  # noqa: E501
             )
             session.add(default_bio)
 
@@ -71,14 +75,24 @@ async def seed_database():
                 role="Software Engineering Intern",
                 start_date="Jan 2026",
                 end_date="Present",
-                description="Engineered backend application APIs using FastAPI, PostgreSQL, and Celery worker routines. Standardized domain entities and implemented dependency inversion to transition legacy systems to strict Clean Architecture. Enhanced system security with secure JWT flows and managed multi-container scaling via Docker Compose.",
+                description="Engineered backend application APIs using "
+                "FastAPI, PostgreSQL, and Celery worker routines. "
+                "Standardized domain entities and implemented dependency "
+                "inversion to transition legacy systems to strict Clean "
+                "Architecture. Enhanced system security with secure JWT "
+                "flows and managed multi-container scaling via Docker "
+                "Compose.",
                 order_index=0,
             )
             session.add(kodehauz_exp)
 
             wordwiz_proj = ProjectDb(
                 title="be-wordwiz",
-                description="An advanced dictionary parsing and word game analytics backend. Features scalable REST APIs, dynamic indexing, dictionary caching via Redis, and high-performance asynchronous background parsing jobs executed by Celery workers.",
+                description="An advanced dictionary parsing and word "
+                "game analytics backend. Features scalable REST APIs, "
+                "dynamic indexing, dictionary caching via Redis, and "
+                "high-performance asynchronous background parsing jobs "
+                "executed by Celery workers.",
                 tech_tags=[
                     "Python",
                     "FastAPI",

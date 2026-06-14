@@ -1,38 +1,52 @@
 import jwt
-from fastapi import Depends, HTTPException, status
+from fastapi import BackgroundTasks, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.domain.entities import User
-from app.domain.interfaces import IUserRepository, IPortfolioRepository, IOTPStore, IEmailService
-from app.infrastructure.db.session import get_db
-from app.infrastructure.db.repositories import SqlAlchemyUserRepository, SqlAlchemyPortfolioRepository
-from app.infrastructure.redis.otp_store import RedisOTPStore
-from app.infrastructure.celery.email_service import CeleryEmailService
+from app.domain.interfaces import (
+    IEmailService,
+    IOTPStore,
+    IPortfolioRepository,
+    IUserRepository,
+)
+from app.infrastructure.background_tasks.email_service import (
+    BackgroundTasksEmailService,
+)
 from app.infrastructure.config.settings import settings
+from app.infrastructure.db.repositories import (
+    SqlAlchemyPortfolioRepository,
+    SqlAlchemyUserRepository,
+)
+from app.infrastructure.db.session import get_db
+from app.infrastructure.redis.otp_store import RedisOTPStore
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/v1/auth/login", auto_error=False)
 
-# --- Dependency Providers ---
 
 def get_user_repository(db: AsyncSession = Depends(get_db)) -> IUserRepository:
     return SqlAlchemyUserRepository(db)
 
-def get_portfolio_repository(db: AsyncSession = Depends(get_db)) -> IPortfolioRepository:
+
+def get_portfolio_repository(
+    db: AsyncSession = Depends(get_db),
+) -> IPortfolioRepository:
     return SqlAlchemyPortfolioRepository(db)
+
 
 def get_otp_store() -> IOTPStore:
     return RedisOTPStore()
 
-def get_email_service() -> IEmailService:
-    return CeleryEmailService()
 
+def get_email_service(
+    background_tasks: BackgroundTasks,
+) -> IEmailService:
+    return BackgroundTasksEmailService(background_tasks)
 
-# --- Security Guards ---
 
 async def get_current_user(
     token: str = Depends(oauth2_scheme),
-    user_repo: IUserRepository = Depends(get_user_repository)
+    user_repo: IUserRepository = Depends(get_user_repository),
 ) -> User:
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
@@ -59,6 +73,7 @@ async def get_current_user(
     if not user.is_active:
         raise HTTPException(status_code=400, detail="Inactive user")
     return user
+
 
 async def get_current_admin(current_user: User = Depends(get_current_user)) -> User:
     if not current_user.is_admin:

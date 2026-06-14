@@ -2,6 +2,7 @@ from typing import List, Optional
 from app.domain.entities import Bio, Experience, Project, Technology
 from app.domain.interfaces import IPortfolioRepository
 
+
 class PortfolioUseCases:
     def __init__(self, portfolio_repo: IPortfolioRepository):
         self.repo = portfolio_repo
@@ -20,7 +21,7 @@ class PortfolioUseCases:
         github_url: Optional[str] = None,
         linkedin_url: Optional[str] = None,
         twitter_url: Optional[str] = None,
-        avatar_url: Optional[str] = None
+        avatar_url: Optional[str] = None,
     ) -> Bio:
         bio = Bio(
             name=name,
@@ -31,7 +32,7 @@ class PortfolioUseCases:
             github_url=github_url,
             linkedin_url=linkedin_url,
             twitter_url=twitter_url,
-            avatar_url=avatar_url
+            avatar_url=avatar_url,
         )
         return await self.repo.update_or_create_bio(bio)
 
@@ -46,7 +47,7 @@ class PortfolioUseCases:
         start_date: str,
         description: str,
         end_date: Optional[str] = None,
-        order_index: int = 0
+        order_index: int = 0,
     ) -> Experience:
         exp = Experience(
             company=company,
@@ -54,7 +55,7 @@ class PortfolioUseCases:
             start_date=start_date,
             description=description,
             end_date=end_date,
-            order_index=order_index
+            order_index=order_index,
         )
         return await self.repo.create_experience(exp)
 
@@ -66,7 +67,7 @@ class PortfolioUseCases:
         start_date: Optional[str] = None,
         description: Optional[str] = None,
         end_date: Optional[str] = None,
-        order_index: Optional[int] = None
+        order_index: Optional[int] = None,
     ) -> Experience:
         existing = await self.repo.get_experience_by_id(exp_id)
         if not existing:
@@ -76,10 +77,14 @@ class PortfolioUseCases:
             company=company if company is not None else existing.company,
             role=role if role is not None else existing.role,
             start_date=start_date if start_date is not None else existing.start_date,
-            description=description if description is not None else existing.description,
+            description=description
+            if description is not None
+            else existing.description,
             end_date=end_date if end_date is not None else existing.end_date,
-            order_index=order_index if order_index is not None else existing.order_index,
-            id=exp_id
+            order_index=order_index
+            if order_index is not None
+            else existing.order_index,
+            id=exp_id,
         )
         result = await self.repo.update_experience(exp_id, updated_exp)
         if not result:
@@ -103,7 +108,7 @@ class PortfolioUseCases:
         tech_tags: List[str],
         repo_link: Optional[str] = None,
         live_link: Optional[str] = None,
-        order_index: int = 0
+        order_index: int = 0,
     ) -> Project:
         proj = Project(
             title=title,
@@ -111,7 +116,7 @@ class PortfolioUseCases:
             tech_tags=tech_tags,
             repo_link=repo_link,
             live_link=live_link,
-            order_index=order_index
+            order_index=order_index,
         )
         return await self.repo.create_project(proj)
 
@@ -123,7 +128,7 @@ class PortfolioUseCases:
         tech_tags: Optional[List[str]] = None,
         repo_link: Optional[str] = None,
         live_link: Optional[str] = None,
-        order_index: Optional[int] = None
+        order_index: Optional[int] = None,
     ) -> Project:
         existing = await self.repo.get_project_by_id(project_id)
         if not existing:
@@ -131,12 +136,16 @@ class PortfolioUseCases:
 
         updated_proj = Project(
             title=title if title is not None else existing.title,
-            description=description if description is not None else existing.description,
+            description=description
+            if description is not None
+            else existing.description,
             tech_tags=tech_tags if tech_tags is not None else existing.tech_tags,
             repo_link=repo_link if repo_link is not None else existing.repo_link,
             live_link=live_link if live_link is not None else existing.live_link,
-            order_index=order_index if order_index is not None else existing.order_index,
-            id=project_id
+            order_index=order_index
+            if order_index is not None
+            else existing.order_index,
+            id=project_id,
         )
         result = await self.repo.update_project(project_id, updated_proj)
         if not result:
@@ -159,14 +168,14 @@ class PortfolioUseCases:
         category: str,
         proficiency: Optional[int] = None,
         icon_name: Optional[str] = None,
-        order_index: int = 0
+        order_index: int = 0,
     ) -> Technology:
         tech = Technology(
             name=name,
             category=category,
             proficiency=proficiency,
             icon_name=icon_name,
-            order_index=order_index
+            order_index=order_index,
         )
         return await self.repo.create_technology(tech)
 
@@ -177,7 +186,7 @@ class PortfolioUseCases:
         category: Optional[str] = None,
         proficiency: Optional[int] = None,
         icon_name: Optional[str] = None,
-        order_index: Optional[int] = None
+        order_index: Optional[int] = None,
     ) -> Technology:
         existing = await self.repo.get_technology_by_id(tech_id)
         if not existing:
@@ -186,10 +195,14 @@ class PortfolioUseCases:
         updated_tech = Technology(
             name=name if name is not None else existing.name,
             category=category if category is not None else existing.category,
-            proficiency=proficiency if proficiency is not None else existing.proficiency,
+            proficiency=proficiency
+            if proficiency is not None
+            else existing.proficiency,
             icon_name=icon_name if icon_name is not None else existing.icon_name,
-            order_index=order_index if order_index is not None else existing.order_index,
-            id=tech_id
+            order_index=order_index
+            if order_index is not None
+            else existing.order_index,
+            id=tech_id,
         )
         result = await self.repo.update_technology(tech_id, updated_tech)
         if not result:

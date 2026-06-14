@@ -1,10 +1,11 @@
 import datetime
 import secrets
 import string
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 import bcrypt
 import jwt
+
 from app.domain.entities import User
 from app.domain.interfaces import IEmailService, IOTPStore, IUserRepository
 from app.infrastructure.config.settings import settings
@@ -46,16 +47,44 @@ class AuthUseCases:
     def __init__(self, user_repo: IUserRepository):
         self.user_repo = user_repo
 
-    async def signup(self, email: str, password: str) -> User:
+    async def create_user(
+        self, email: str, password: str, is_admin: bool = False
+    ) -> User:
         existing = await self.user_repo.get_by_email(email)
         if existing:
             raise ValueError("User with this email already registered")
 
         hashed_pwd = hash_password(password)
         new_user = User(
-            email=email, hashed_password=hashed_pwd, is_active=True, is_admin=False
+            email=email, hashed_password=hashed_pwd, is_active=True, is_admin=is_admin
         )
         return await self.user_repo.create(new_user)
+
+    async def update_user(
+        self,
+        user_id: int,
+        email: Optional[str] = None,
+        password: Optional[str] = None,
+        is_admin: Optional[bool] = None,
+    ) -> User:
+        if email is not None:
+            existing = await self.user_repo.get_by_email(email)
+            if existing and existing.id != user_id:
+                raise ValueError("User with this email already registered")
+
+        hashed_pwd = None
+        if password is not None and password != "":
+            hashed_pwd = hash_password(password)
+
+        updated_user = await self.user_repo.update_user(
+            user_id=user_id,
+            email=email,
+            hashed_password=hashed_pwd,
+            is_admin=is_admin,
+        )
+        if not updated_user:
+            raise ValueError("User not found")
+        return updated_user
 
     async def login(self, email: str, password: str) -> Dict[str, Any]:
         user = await self.user_repo.get_by_email(email)

@@ -11,14 +11,17 @@ router = APIRouter(tags=["portfolio"])
 
 # --- BIO ENDPOINTS ---
 
+
 @router.get("/profile", response_model=schemas.BioResponse)
-async def get_profile(portfolio_repo: IPortfolioRepository = Depends(get_portfolio_repository)):
+async def get_profile(
+    portfolio_repo: IPortfolioRepository = Depends(get_portfolio_repository),
+):
     use_cases = PortfolioUseCases(portfolio_repo)
     bio = await use_cases.get_profile()
     if not bio:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Profile/Bio content not found"
+            detail="Profile/Bio content not found",
         )
     return bio
 
@@ -27,7 +30,7 @@ async def get_profile(portfolio_repo: IPortfolioRepository = Depends(get_portfol
 async def update_profile(
     bio_data: schemas.BioCreate,
     portfolio_repo: IPortfolioRepository = Depends(get_portfolio_repository),
-    admin: User = Depends(get_current_admin)
+    admin: User = Depends(get_current_admin),
 ):
     use_cases = PortfolioUseCases(portfolio_repo)
     return await use_cases.update_profile(
@@ -39,14 +42,17 @@ async def update_profile(
         github_url=bio_data.github_url,
         linkedin_url=bio_data.linkedin_url,
         twitter_url=bio_data.twitter_url,
-        avatar_url=bio_data.avatar_url
+        avatar_url=bio_data.avatar_url,
     )
 
 
 # --- EXPERIENCE ENDPOINTS ---
 
+
 @router.get("/experiences", response_model=List[schemas.ExperienceResponse])
-async def get_experiences_list(portfolio_repo: IPortfolioRepository = Depends(get_portfolio_repository)):
+async def get_experiences_list(
+    portfolio_repo: IPortfolioRepository = Depends(get_portfolio_repository),
+):
     use_cases = PortfolioUseCases(portfolio_repo)
     return await use_cases.get_experiences()
 
@@ -54,12 +60,12 @@ async def get_experiences_list(portfolio_repo: IPortfolioRepository = Depends(ge
 @router.post(
     "/experiences",
     response_model=schemas.ExperienceResponse,
-    status_code=status.HTTP_201_CREATED
+    status_code=status.HTTP_201_CREATED,
 )
 async def create_new_experience(
     exp_data: schemas.ExperienceCreate,
     portfolio_repo: IPortfolioRepository = Depends(get_portfolio_repository),
-    admin: User = Depends(get_current_admin)
+    admin: User = Depends(get_current_admin),
 ):
     use_cases = PortfolioUseCases(portfolio_repo)
     return await use_cases.create_experience(
@@ -68,7 +74,7 @@ async def create_new_experience(
         start_date=exp_data.start_date,
         description=exp_data.description,
         end_date=exp_data.end_date,
-        order_index=exp_data.order_index
+        order_index=exp_data.order_index,
     )
 
 
@@ -77,7 +83,7 @@ async def update_existing_experience(
     exp_id: int,
     exp_data: schemas.ExperienceUpdate,
     portfolio_repo: IPortfolioRepository = Depends(get_portfolio_repository),
-    admin: User = Depends(get_current_admin)
+    admin: User = Depends(get_current_admin),
 ):
     use_cases = PortfolioUseCases(portfolio_repo)
     try:
@@ -88,7 +94,7 @@ async def update_existing_experience(
             start_date=exp_data.start_date,
             description=exp_data.description,
             end_date=exp_data.end_date,
-            order_index=exp_data.order_index
+            order_index=exp_data.order_index,
         )
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
@@ -98,7 +104,7 @@ async def update_existing_experience(
 async def delete_existing_experience(
     exp_id: int,
     portfolio_repo: IPortfolioRepository = Depends(get_portfolio_repository),
-    admin: User = Depends(get_current_admin)
+    admin: User = Depends(get_current_admin),
 ):
     use_cases = PortfolioUseCases(portfolio_repo)
     try:
@@ -110,8 +116,11 @@ async def delete_existing_experience(
 
 # --- PROJECT ENDPOINTS ---
 
+
 @router.get("/projects", response_model=List[schemas.ProjectResponse])
-async def get_projects_list(portfolio_repo: IPortfolioRepository = Depends(get_portfolio_repository)):
+async def get_projects_list(
+    portfolio_repo: IPortfolioRepository = Depends(get_portfolio_repository),
+):
     use_cases = PortfolioUseCases(portfolio_repo)
     return await use_cases.get_projects()
 
@@ -119,12 +128,12 @@ async def get_projects_list(portfolio_repo: IPortfolioRepository = Depends(get_p
 @router.post(
     "/projects",
     response_model=schemas.ProjectResponse,
-    status_code=status.HTTP_201_CREATED
+    status_code=status.HTTP_201_CREATED,
 )
 async def create_new_project(
     proj_data: schemas.ProjectCreate,
     portfolio_repo: IPortfolioRepository = Depends(get_portfolio_repository),
-    admin: User = Depends(get_current_admin)
+    admin: User = Depends(get_current_admin),
 ):
     use_cases = PortfolioUseCases(portfolio_repo)
     return await use_cases.create_project(
@@ -133,7 +142,7 @@ async def create_new_project(
         tech_tags=proj_data.tech_tags,
         repo_link=proj_data.repo_link,
         live_link=proj_data.live_link,
-        order_index=proj_data.order_index
+        order_index=proj_data.order_index,
     )
 
 
@@ -142,7 +151,7 @@ async def update_existing_project(
     proj_id: int,
     proj_data: schemas.ProjectUpdate,
     portfolio_repo: IPortfolioRepository = Depends(get_portfolio_repository),
-    admin: User = Depends(get_current_admin)
+    admin: User = Depends(get_current_admin),
 ):
     use_cases = PortfolioUseCases(portfolio_repo)
     try:
@@ -153,7 +162,7 @@ async def update_existing_project(
             tech_tags=proj_data.tech_tags,
             repo_link=proj_data.repo_link,
             live_link=proj_data.live_link,
-            order_index=proj_data.order_index
+            order_index=proj_data.order_index,
         )
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
@@ -163,7 +172,7 @@ async def update_existing_project(
 async def delete_existing_project(
     proj_id: int,
     portfolio_repo: IPortfolioRepository = Depends(get_portfolio_repository),
-    admin: User = Depends(get_current_admin)
+    admin: User = Depends(get_current_admin),
 ):
     use_cases = PortfolioUseCases(portfolio_repo)
     try:
@@ -175,8 +184,11 @@ async def delete_existing_project(
 
 # --- TECHNOLOGY ENDPOINTS ---
 
+
 @router.get("/technologies", response_model=List[schemas.TechnologyResponse])
-async def get_technologies_list(portfolio_repo: IPortfolioRepository = Depends(get_portfolio_repository)):
+async def get_technologies_list(
+    portfolio_repo: IPortfolioRepository = Depends(get_portfolio_repository),
+):
     use_cases = PortfolioUseCases(portfolio_repo)
     return await use_cases.get_technologies()
 
@@ -184,12 +196,12 @@ async def get_technologies_list(portfolio_repo: IPortfolioRepository = Depends(g
 @router.post(
     "/technologies",
     response_model=schemas.TechnologyResponse,
-    status_code=status.HTTP_201_CREATED
+    status_code=status.HTTP_201_CREATED,
 )
 async def create_new_technology(
     tech_data: schemas.TechnologyCreate,
     portfolio_repo: IPortfolioRepository = Depends(get_portfolio_repository),
-    admin: User = Depends(get_current_admin)
+    admin: User = Depends(get_current_admin),
 ):
     use_cases = PortfolioUseCases(portfolio_repo)
     return await use_cases.create_technology(
@@ -197,7 +209,7 @@ async def create_new_technology(
         category=tech_data.category,
         proficiency=tech_data.proficiency,
         icon_name=tech_data.icon_name,
-        order_index=tech_data.order_index
+        order_index=tech_data.order_index,
     )
 
 
@@ -206,7 +218,7 @@ async def update_existing_technology(
     tech_id: int,
     tech_data: schemas.TechnologyUpdate,
     portfolio_repo: IPortfolioRepository = Depends(get_portfolio_repository),
-    admin: User = Depends(get_current_admin)
+    admin: User = Depends(get_current_admin),
 ):
     use_cases = PortfolioUseCases(portfolio_repo)
     try:
@@ -216,7 +228,7 @@ async def update_existing_technology(
             category=tech_data.category,
             proficiency=tech_data.proficiency,
             icon_name=tech_data.icon_name,
-            order_index=tech_data.order_index
+            order_index=tech_data.order_index,
         )
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
@@ -226,7 +238,7 @@ async def update_existing_technology(
 async def delete_existing_technology(
     tech_id: int,
     portfolio_repo: IPortfolioRepository = Depends(get_portfolio_repository),
-    admin: User = Depends(get_current_admin)
+    admin: User = Depends(get_current_admin),
 ):
     use_cases = PortfolioUseCases(portfolio_repo)
     try:

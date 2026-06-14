@@ -1,7 +1,6 @@
 import logging
 
-from pydantic import ConfigDict
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
@@ -34,11 +33,14 @@ class Settings(BaseSettings):
 
     ALLOWED_ORIGINS: str = "http://localhost:3000"
 
-    model_config = ConfigDict(env_file=".env", extra="ignore")
+    model_config = SettingsConfigDict(
+        env_file=(".env", "../.env"),
+        extra="ignore",
+    )
 
     @property
     def allowed_origins_list(self) -> list[str]:
-        return [o.strip() for o in self.ALLOWED_ORIGINS.split(",") if o.strip()]
+        return [o.strip() for o in self.ALLOWED_ORIGINS.split(",") if o.strip()]  # noqa: E501
 
     def get_database_url(self) -> str:
         if self.DATABASE_URL:
@@ -46,14 +48,16 @@ class Settings(BaseSettings):
             if url.startswith("postgresql://"):
                 url = url.replace("postgresql://", "postgresql+asyncpg://", 1)
             return url
-        return f"postgresql+asyncpg://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}@{self.POSTGRES_HOST}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
+        return f"postgresql+asyncpg://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}@{self.POSTGRES_HOST}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"  # noqa: E501
 
 
 settings = Settings()
 
 
 logger = logging.getLogger(__name__)
-if settings.JWT_SECRET == "super_secret_jwt_key_change_me_in_production_1928374":
+if settings.JWT_SECRET == "super_secret_jwt_key_change_me_in_production_1928374":  # noqa: E501
     logger.warning(
-        "SECURITY WARNING: Using default JWT_SECRET. Overwrite JWT_SECRET in production to protect application authentication."
+        "SECURITY WARNING: Using default JWT_SECRET. "
+        "Overwrite JWT_SECRET in production to protect application "
+        "authentication."
     )

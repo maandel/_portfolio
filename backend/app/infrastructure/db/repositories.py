@@ -1,10 +1,18 @@
 from typing import List, Optional
+
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
-from app.domain.entities import User, Bio, Experience, Project, Technology
-from app.domain.interfaces import IUserRepository, IPortfolioRepository
-from app.infrastructure.db.models import UserDb, BioDb, ExperienceDb, ProjectDb, TechnologyDb
+from app.domain.entities import Bio, Experience, Project, Technology, User
+from app.domain.interfaces import IPortfolioRepository, IUserRepository
+from app.infrastructure.db.models import (
+    BioDb,
+    ExperienceDb,
+    ProjectDb,
+    TechnologyDb,
+    UserDb,
+)
+
 
 # --- Mappers ---
 def to_user_entity(db_user: UserDb) -> User:
@@ -13,8 +21,9 @@ def to_user_entity(db_user: UserDb) -> User:
         hashed_password=db_user.hashed_password,
         is_active=db_user.is_active,
         is_admin=db_user.is_admin,
-        id=db_user.id
+        id=db_user.id,
     )
+
 
 def to_bio_entity(db_bio: BioDb) -> Bio:
     return Bio(
@@ -27,8 +36,9 @@ def to_bio_entity(db_bio: BioDb) -> Bio:
         linkedin_url=db_bio.linkedin_url,
         twitter_url=db_bio.twitter_url,
         avatar_url=db_bio.avatar_url,
-        id=db_bio.id
+        id=db_bio.id,
     )
+
 
 def to_experience_entity(db_exp: ExperienceDb) -> Experience:
     return Experience(
@@ -38,8 +48,9 @@ def to_experience_entity(db_exp: ExperienceDb) -> Experience:
         end_date=db_exp.end_date,
         description=db_exp.description,
         order_index=db_exp.order_index,
-        id=db_exp.id
+        id=db_exp.id,
     )
+
 
 def to_project_entity(db_proj: ProjectDb) -> Project:
     return Project(
@@ -49,8 +60,9 @@ def to_project_entity(db_proj: ProjectDb) -> Project:
         repo_link=db_proj.repo_link,
         live_link=db_proj.live_link,
         order_index=db_proj.order_index,
-        id=db_proj.id
+        id=db_proj.id,
     )
+
 
 def to_tech_entity(db_tech: TechnologyDb) -> Technology:
     return Technology(
@@ -59,11 +71,12 @@ def to_tech_entity(db_tech: TechnologyDb) -> Technology:
         proficiency=db_tech.proficiency,
         icon_name=db_tech.icon_name,
         order_index=db_tech.order_index,
-        id=db_tech.id
+        id=db_tech.id,
     )
 
 
 # --- Repositories ---
+
 
 class SqlAlchemyUserRepository(IUserRepository):
     def __init__(self, db: AsyncSession):
@@ -79,7 +92,7 @@ class SqlAlchemyUserRepository(IUserRepository):
             email=user.email,
             hashed_password=user.hashed_password,
             is_active=user.is_active,
-            is_admin=user.is_admin
+            is_admin=user.is_admin,
         )
         self.db.add(db_user)
         await self.db.commit()
@@ -92,10 +105,56 @@ class SqlAlchemyUserRepository(IUserRepository):
         if not db_user:
             raise ValueError(f"User with email {email} not found")
         db_user.hashed_password = hashed_password
+        await self.db.commit()
+        await self.db.refresh(db_user)
+        return to_user_entity(db_user)
+
+    async def list_users(self) -> List[User]:
+        result = await self.db.execute(select(UserDb).order_by(UserDb.id.asc()))
+        db_users = result.scalars().all()
+        return [to_user_entity(u) for u in db_users]
+
+    async def update_status(self, user_id: int, is_active: bool) -> Optional[User]:
+        result = await self.db.execute(select(UserDb).where(UserDb.id == user_id))
+        db_user = result.scalars().first()
+        if not db_user:
+            return None
+        db_user.is_active = is_active
         self.db.add(db_user)
         await self.db.commit()
         await self.db.refresh(db_user)
         return to_user_entity(db_user)
+
+    async def update_user(
+        self,
+        user_id: int,
+        email: Optional[str] = None,
+        hashed_password: Optional[str] = None,
+        is_admin: Optional[bool] = None,
+    ) -> Optional[User]:
+        result = await self.db.execute(select(UserDb).where(UserDb.id == user_id))
+        db_user = result.scalars().first()
+        if not db_user:
+            return None
+        if email is not None:
+            db_user.email = email
+        if hashed_password is not None:
+            db_user.hashed_password = hashed_password
+        if is_admin is not None:
+            db_user.is_admin = is_admin
+        self.db.add(db_user)
+        await self.db.commit()
+        await self.db.refresh(db_user)
+        return to_user_entity(db_user)
+
+    async def delete_user(self, user_id: int) -> bool:
+        result = await self.db.execute(select(UserDb).where(UserDb.id == user_id))
+        db_user = result.scalars().first()
+        if not db_user:
+            return False
+        await self.db.delete(db_user)
+        await self.db.commit()
+        return True
 
 
 class SqlAlchemyPortfolioRepository(IPortfolioRepository):
@@ -131,7 +190,7 @@ class SqlAlchemyPortfolioRepository(IPortfolioRepository):
                 github_url=bio.github_url,
                 linkedin_url=bio.linkedin_url,
                 twitter_url=bio.twitter_url,
-                avatar_url=bio.avatar_url
+                avatar_url=bio.avatar_url,
             )
             self.db.add(db_bio)
 
@@ -141,12 +200,16 @@ class SqlAlchemyPortfolioRepository(IPortfolioRepository):
 
     async def get_experiences(self) -> List[Experience]:
         result = await self.db.execute(
-            select(ExperienceDb).order_by(ExperienceDb.order_index.asc(), ExperienceDb.id.desc())
+            select(ExperienceDb).order_by(
+                ExperienceDb.order_index.asc(), ExperienceDb.id.desc()
+            )
         )
         return [to_experience_entity(x) for x in result.scalars().all()]
 
     async def get_experience_by_id(self, exp_id: int) -> Optional[Experience]:
-        result = await self.db.execute(select(ExperienceDb).where(ExperienceDb.id == exp_id))
+        result = await self.db.execute(
+            select(ExperienceDb).where(ExperienceDb.id == exp_id)
+        )
         db_exp = result.scalars().first()
         return to_experience_entity(db_exp) if db_exp else None
 
@@ -157,15 +220,19 @@ class SqlAlchemyPortfolioRepository(IPortfolioRepository):
             start_date=exp.start_date,
             end_date=exp.end_date,
             description=exp.description,
-            order_index=exp.order_index
+            order_index=exp.order_index,
         )
         self.db.add(db_exp)
         await self.db.commit()
         await self.db.refresh(db_exp)
         return to_experience_entity(db_exp)
 
-    async def update_experience(self, exp_id: int, exp: Experience) -> Optional[Experience]:
-        result = await self.db.execute(select(ExperienceDb).where(ExperienceDb.id == exp_id))
+    async def update_experience(
+        self, exp_id: int, exp: Experience
+    ) -> Optional[Experience]:
+        result = await self.db.execute(
+            select(ExperienceDb).where(ExperienceDb.id == exp_id)
+        )
         db_exp = result.scalars().first()
         if not db_exp:
             return None
@@ -181,7 +248,9 @@ class SqlAlchemyPortfolioRepository(IPortfolioRepository):
         return to_experience_entity(db_exp)
 
     async def delete_experience(self, exp_id: int) -> bool:
-        result = await self.db.execute(select(ExperienceDb).where(ExperienceDb.id == exp_id))
+        result = await self.db.execute(
+            select(ExperienceDb).where(ExperienceDb.id == exp_id)
+        )
         db_exp = result.scalars().first()
         if not db_exp:
             return False
@@ -196,7 +265,9 @@ class SqlAlchemyPortfolioRepository(IPortfolioRepository):
         return [to_project_entity(p) for p in result.scalars().all()]
 
     async def get_project_by_id(self, project_id: int) -> Optional[Project]:
-        result = await self.db.execute(select(ProjectDb).where(ProjectDb.id == project_id))
+        result = await self.db.execute(
+            select(ProjectDb).where(ProjectDb.id == project_id)
+        )
         db_proj = result.scalars().first()
         return to_project_entity(db_proj) if db_proj else None
 
@@ -207,15 +278,19 @@ class SqlAlchemyPortfolioRepository(IPortfolioRepository):
             tech_tags=project.tech_tags,
             repo_link=project.repo_link,
             live_link=project.live_link,
-            order_index=project.order_index
+            order_index=project.order_index,
         )
         self.db.add(db_proj)
         await self.db.commit()
         await self.db.refresh(db_proj)
         return to_project_entity(db_proj)
 
-    async def update_project(self, project_id: int, project: Project) -> Optional[Project]:
-        result = await self.db.execute(select(ProjectDb).where(ProjectDb.id == project_id))
+    async def update_project(
+        self, project_id: int, project: Project
+    ) -> Optional[Project]:
+        result = await self.db.execute(
+            select(ProjectDb).where(ProjectDb.id == project_id)
+        )
         db_proj = result.scalars().first()
         if not db_proj:
             return None
@@ -231,7 +306,9 @@ class SqlAlchemyPortfolioRepository(IPortfolioRepository):
         return to_project_entity(db_proj)
 
     async def delete_project(self, project_id: int) -> bool:
-        result = await self.db.execute(select(ProjectDb).where(ProjectDb.id == project_id))
+        result = await self.db.execute(
+            select(ProjectDb).where(ProjectDb.id == project_id)
+        )
         db_proj = result.scalars().first()
         if not db_proj:
             return False
@@ -241,17 +318,23 @@ class SqlAlchemyPortfolioRepository(IPortfolioRepository):
 
     async def get_technologies(self) -> List[Technology]:
         result = await self.db.execute(
-            select(TechnologyDb).order_by(TechnologyDb.order_index.asc(), TechnologyDb.id.desc())
+            select(TechnologyDb).order_by(
+                TechnologyDb.order_index.asc(), TechnologyDb.id.desc()
+            )
         )
         return [to_tech_entity(t) for t in result.scalars().all()]
 
     async def get_technology_by_id(self, tech_id: int) -> Optional[Technology]:
-        result = await self.db.execute(select(TechnologyDb).where(TechnologyDb.id == tech_id))
+        result = await self.db.execute(
+            select(TechnologyDb).where(TechnologyDb.id == tech_id)
+        )
         db_tech = result.scalars().first()
         return to_tech_entity(db_tech) if db_tech else None
 
     async def create_technology(self, tech: Technology) -> Technology:
-        result = await self.db.execute(select(TechnologyDb).where(TechnologyDb.name == tech.name))
+        result = await self.db.execute(
+            select(TechnologyDb).where(TechnologyDb.name == tech.name)
+        )
         existing = result.scalars().first()
         if existing:
             existing.category = tech.category
@@ -265,7 +348,7 @@ class SqlAlchemyPortfolioRepository(IPortfolioRepository):
                 category=tech.category,
                 proficiency=tech.proficiency,
                 icon_name=tech.icon_name,
-                order_index=tech.order_index
+                order_index=tech.order_index,
             )
             self.db.add(db_tech)
 
@@ -273,8 +356,12 @@ class SqlAlchemyPortfolioRepository(IPortfolioRepository):
         await self.db.refresh(db_tech)
         return to_tech_entity(db_tech)
 
-    async def update_technology(self, tech_id: int, tech: Technology) -> Optional[Technology]:
-        result = await self.db.execute(select(TechnologyDb).where(TechnologyDb.id == tech_id))
+    async def update_technology(
+        self, tech_id: int, tech: Technology
+    ) -> Optional[Technology]:
+        result = await self.db.execute(
+            select(TechnologyDb).where(TechnologyDb.id == tech_id)
+        )
         db_tech = result.scalars().first()
         if not db_tech:
             return None
@@ -289,7 +376,9 @@ class SqlAlchemyPortfolioRepository(IPortfolioRepository):
         return to_tech_entity(db_tech)
 
     async def delete_technology(self, tech_id: int) -> bool:
-        result = await self.db.execute(select(TechnologyDb).where(TechnologyDb.id == tech_id))
+        result = await self.db.execute(
+            select(TechnologyDb).where(TechnologyDb.id == tech_id)
+        )
         db_tech = result.scalars().first()
         if not db_tech:
             return False

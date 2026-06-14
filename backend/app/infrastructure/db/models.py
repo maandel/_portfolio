@@ -1,6 +1,7 @@
 from sqlalchemy import JSON, Boolean, Column, Integer, String, Text
 from app.infrastructure.db.session import Base
 
+
 class UserDb(Base):
     __tablename__ = "users"
 
@@ -9,6 +10,7 @@ class UserDb(Base):
     hashed_password = Column(String, nullable=False)
     is_active = Column(Boolean, default=True)
     is_admin = Column(Boolean, default=True)
+
 
 class BioDb(Base):
     __tablename__ = "bios"
@@ -24,6 +26,7 @@ class BioDb(Base):
     email = Column(String, nullable=False)
     avatar_url = Column(String, nullable=True)
 
+
 class ExperienceDb(Base):
     __tablename__ = "experiences"
 
@@ -35,6 +38,7 @@ class ExperienceDb(Base):
     description = Column(Text, nullable=False)
     order_index = Column(Integer, default=0)
 
+
 class ProjectDb(Base):
     __tablename__ = "projects"
 
@@ -45,6 +49,7 @@ class ProjectDb(Base):
     repo_link = Column(String, nullable=True)
     live_link = Column(String, nullable=True)
     order_index = Column(Integer, default=0)
+
 
 class TechnologyDb(Base):
     __tablename__ = "technologies"
