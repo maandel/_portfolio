@@ -51,7 +51,7 @@ def send_otp_email_task(email: str, otp: str) -> str:
         print(f"TO: {email}")
         print(f"OTP: {otp}")
         print("=" * 50 + "\n")
-        return f"Logged OTP email to {email} (SMTP fallback): OTP is {otp}"
+        return f"Logged OTP email to {email} (SMTP fallback completed)"
 
 
 @celery_app.task(name="app.infrastructure.celery.tasks.send_contact_email_task")

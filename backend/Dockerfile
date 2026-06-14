@@ -12,7 +12,6 @@ RUN pip install --no-cache-dir --default-timeout=300 poetry
 
 COPY pyproject.toml poetry.lock* ./
 
-# Disable keyring lookup, set network retries, and virtualenv creation inside the container
 RUN poetry config keyring.enabled false \
     && poetry config virtualenvs.create false \
     && poetry install --no-root --no-interaction --no-ansi
@@ -20,4 +19,6 @@ RUN poetry config keyring.enabled false \
 COPY . .
 
 EXPOSE 8000
+
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
 

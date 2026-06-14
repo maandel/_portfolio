@@ -7,7 +7,7 @@ class User:
     email: str
     hashed_password: str
     is_active: bool = True
-    is_admin: bool = True
+    is_admin: bool = False
     id: Optional[int] = None
 
 
