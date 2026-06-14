@@ -1,0 +1,89 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", system-ui, -apple-system, sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+
+  --color-primary-50: #f0f7ff;
+  --color-primary-100: #e0effe;
+  --color-primary-200: #bae0fd;
+  --color-primary-500: #3b82f6;
+  --color-primary-600: #2563eb;
+  --color-primary-700: #1d4ed8;
+  --color-primary-900: #1e3a8a;
+
+  --color-cyber-green: #10b981;
+  --color-cyber-blue: #06b6d4;
+  --color-cyber-purple: #8b5cf6;
+  --color-cyber-orange: #f59e0b;
+
+  --color-card-bg: var(--card-bg);
+  --color-card-border: var(--card-border);
+  --color-text-muted: var(--text-muted);
+  --color-terminal-bg: var(--terminal-bg);
+  --color-terminal-text: var(--terminal-text);
+}
+
+:root {
+  --background: #f9fafb;
+  --foreground: #111827;
+  --card-bg: #ffffff;
+  --card-border: #e5e7eb;
+  --text-muted: #4b5563;
+  --terminal-bg: #111827;
+  --terminal-text: #f3f4f6;
+}
+
+.dark {
+  --background: #0a0f1d;
+  --foreground: #f3f4f6;
+  --card-bg: #111827;
+  --card-border: #1f2937;
+  --text-muted: #9ca3af;
+  --terminal-bg: #030712;
+  --terminal-text: #34d399;
+}
+
+html,
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+  font-family: var(--font-sans);
+}
+
+
+pre,
+code,
+.font-mono {
+  font-family: var(--font-mono), monospace;
+}
+
+.grid-bg {
+  background-size: 40px 40px;
+  background-image: linear-gradient(to right, rgba(128, 128, 128, 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(128, 128, 128, 0.05) 1px, transparent 1px);
+}
+
+.dark .grid-bg {
+  background-image: linear-gradient(to right, rgba(96, 165, 250, 0.03) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(96, 165, 250, 0.03) 1px, transparent 1px);
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--background);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--card-border);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}
