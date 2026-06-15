@@ -1,5 +1,6 @@
 import logging
 
+from pydantic import model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -13,6 +14,7 @@ class Settings(BaseSettings):
 
     REDIS_HOST: str = "localhost"
     REDIS_PORT: int = 6379
+    REDIS_URL: str = ""
 
     CELERY_BROKER_URL: str = "redis://localhost:6379/0"
     CELERY_RESULT_BACKEND: str = "redis://localhost:6379/1"
@@ -48,6 +50,57 @@ class Settings(BaseSettings):
         if self.SMTP_USE_SSL is not None:
             return self.SMTP_USE_SSL
         return self.SMTP_PORT == 465
+
+    @model_validator(mode="after")
+    def configure_redis_and_celery(self) -> "Settings":
+        redis_url = self.REDIS_URL.strip() if self.REDIS_URL else ""
+
+        # If CELERY_BROKER_URL is default/empty and REDIS_URL is set, derive it
+        if (
+            not self.CELERY_BROKER_URL
+            or self.CELERY_BROKER_URL == "redis://localhost:6379/0"
+        ):
+            if redis_url:
+                self.CELERY_BROKER_URL = self._derive_celery_url(redis_url, 0)
+            else:
+                self.CELERY_BROKER_URL = (
+                    f"redis://{self.REDIS_HOST}:{self.REDIS_PORT}/0"
+                )
+
+        # If CELERY_RESULT_BACKEND is default/empty and REDIS_URL is set, derive it
+        if (
+            not self.CELERY_RESULT_BACKEND
+            or self.CELERY_RESULT_BACKEND == "redis://localhost:6379/1"
+        ):
+            if redis_url:
+                self.CELERY_RESULT_BACKEND = self._derive_celery_url(redis_url, 1)
+            else:
+                self.CELERY_RESULT_BACKEND = (
+                    f"redis://{self.REDIS_HOST}:{self.REDIS_PORT}/1"
+                )
+
+        return self
+
+    def _derive_celery_url(self, base_url: str, db_index: int) -> str:
+        import urllib.parse
+
+        parsed = urllib.parse.urlparse(base_url)
+        path = parsed.path.strip("/")
+        if path.isdigit():
+            new_path = f"/{db_index}"
+        else:
+            new_path = f"/{path}/{db_index}" if path else f"/{db_index}"
+
+        return urllib.parse.urlunparse(
+            (
+                parsed.scheme,
+                parsed.netloc,
+                new_path,
+                parsed.params,
+                parsed.query,
+                parsed.fragment,
+            )
+        )
 
     @property
     def allowed_origins_list(self) -> list[str]:

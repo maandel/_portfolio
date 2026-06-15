@@ -12,6 +12,12 @@ logger = logging.getLogger(__name__)
 
 
 def _send_smtp_message(msg: MIMEMultipart) -> None:
+    if not settings.use_ssl and not settings.SMTP_USE_STARTTLS:
+        raise ValueError(
+            "Insecure SMTP authentication: TLS/SSL is required but both SSL "
+            "and STARTTLS are disabled."
+        )
+
     if settings.use_ssl:
         with smtplib.SMTP_SSL(
             settings.SMTP_HOST,
@@ -70,14 +76,20 @@ def send_otp_email_sync(email: str, otp: str) -> str:
     except Exception as e:
         logger.error(f"SMTP failed to send OTP reset email to {email}: {str(e)}")
         if settings.EMAIL_FALLBACK_TO_FILE:
+            wrote_fallback = False
             try:
                 with open("local_email_fallback.log", "a", encoding="utf-8") as f:
                     f.write(f"--- OTP RESET [{email}] ---\n")
                     f.write(f"OTP: {otp}\n")
                     f.write("-" * 40 + "\n")
-            except Exception:
-                pass
-            return f"Logged OTP email to {email} (SMTP fallback completed)"
+                wrote_fallback = True
+            except Exception as io_err:
+                logger.exception(
+                    f"Failed to write OTP fallback to file for {email}: {str(io_err)}"
+                )
+            if wrote_fallback:
+                return f"Logged OTP email to {email} (SMTP fallback completed)"
+            return f"Failed to send OTP email to {email} (fallback write failed)"
         return f"Failed to send OTP email to {email} (no fallback)"
 
 
@@ -119,14 +131,24 @@ def send_contact_email_sync(name: str, email: str, message: str) -> str:
             f"SMTP failed to send contact email from {name} ({email}): {str(e)}"
         )
         if settings.EMAIL_FALLBACK_TO_FILE:
+            wrote_fallback = False
             try:
                 with open("local_email_fallback.log", "a", encoding="utf-8") as f:
                     f.write(f"--- CONTACT FORM [{name} ({email})] ---\n")
                     f.write(f"MESSAGE: {message}\n")
                     f.write("-" * 40 + "\n")
-            except Exception:
-                pass
-            return f"Logged contact email from {name} ({email}) (SMTP fallback)"
+                wrote_fallback = True
+            except Exception as io_err:
+                logger.exception(
+                    "Failed to write contact message fallback to file "
+                    f"for {name} ({email}): {str(io_err)}"
+                )
+            if wrote_fallback:
+                return f"Logged contact email from {name} ({email}) (SMTP fallback)"
+            return (
+                f"Failed to send contact email from {name} ({email}) "
+                "(fallback write failed)"
+            )
         return f"Failed to send contact email from {name} ({email})"
 
 
