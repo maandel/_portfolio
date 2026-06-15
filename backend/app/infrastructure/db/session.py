@@ -44,15 +44,16 @@ if parsed.query:
 
         if sslmode != "disable" and ssl_param not in ("disable", "false", "0"):
             ssl_context = ssl.create_default_context()
-            if sslmode in ("no-verify", "prefer", "require") or ssl_param in ("no-verify", "prefer", "require"):
-                # sslmode=require (or no-verify/prefer) is standard PG behavior to use SSL but skip CA certificate verification
+            if sslmode in ("no-verify", "prefer") or ssl_param in (
+                "no-verify",
+                "prefer",
+            ):
                 ssl_context.check_hostname = False
                 ssl_context.verify_mode = ssl.CERT_NONE
             elif sslmode == "verify-ca":
                 ssl_context.check_hostname = False
                 ssl_context.verify_mode = ssl.CERT_REQUIRED
             else:
-                # Default to verify-full (strict check hostname and certificate)
                 ssl_context.check_hostname = True
                 ssl_context.verify_mode = ssl.CERT_REQUIRED
             connect_args["ssl"] = ssl_context
