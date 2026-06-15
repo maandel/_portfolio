@@ -1,0 +1,262 @@
+========================================================================
+PORTFOLIO DATA - OKIKI NELSON SUVWE
+========================================================================
+
+------------------------------------------------------------------------
+1. USER PROFILE & BIO
+------------------------------------------------------------------------
+
+NAME: 
+Okiki Nelson Suvwe
+
+TITLE: 
+Software Engineer | Backend & Full-Stack Developer
+
+EMAIL: 
+nelsonokiki@gmail.com
+
+GITHUB: 
+https://github.com/maandel
+
+LINKEDIN: 
+https://linkedin.com/in/okiki-nelson-50863815a
+
+TWITTER:
+[Blank or none]
+
+RESUME URL:
+[Blank or none]
+
+AVATAR URL:
+https://images.unsplash.com/photo-1618401471353-b98aedd07871?q=80&w=300&h=300&fit=crop
+
+ABOUT ME / BIO:
+Results-driven Software Engineer with hands-on experience building scalable RESTful APIs and backend systems using Python (Django, FastAPI, Flask). Skilled in authentication systems, database optimization, Redis caching, Celery task queues, and cloud media management. Certified Product Manager with additional experience in technical project delivery. Comfortable working across the full stack and in agile team environments. Passionate about clean architecture, maintainable code, and shipping production-ready software.
+
+
+------------------------------------------------------------------------
+2. EXPERIENCE TIMELINE
+------------------------------------------------------------------------
+
+=== EXPERIENCE 1 ===
+COMPANY: Skiflux
+ROLE: Backend Developer
+START DATE: Jul 2025
+END DATE: Present (or leave blank)
+DESCRIPTION:
+Engineered the modular Clean Architecture backend for a gamified EdTech platform using Django REST Framework. Developed a custom multi-currency wallet system (`wallet.py`) supporting creator monetization, deposits, and payouts integrated with Stripe and Adyen. Coded a gamification engine (`gamification.py`) tracking user points/badges to boost learner completion rates. Implemented AI-driven content moderation services leveraging `google-genai` (Gemini SDK) and geolocation verification via GeoIP2/Django IPware. Configured Celery 5.4.0 with Redis 7.4.0 for background notifications, Resend for transactional emails, Sentry for real-time error logging, and NewRelic for performance monitoring.
+
+=== EXPERIENCE 2 ===
+COMPANY: Project 24 / RemPro
+ROLE: Backend Developer
+START DATE: Jan 2026
+END DATE: Apr 2026
+DESCRIPTION:
+Developed and refactored a freelancer-company connection platform into a modular MVT structure. Engineered an escrow contract system (`contract.py`) for freelance agreements and transaction milestones. Integrated Paystack for automated split payments and dynamic platform tax distributions. Designed a background-processed profile verification system featuring NIN verification, Cloudinary media signature generation, and digital Virtual Citizenship ID card builder. Configured asynchronous and periodic task scheduling with `django-celery-beat` and built a multi-tenant messaging workspace (`workspace.py`) supporting task tracking.
+
+=== EXPERIENCE 3 ===
+COMPANY: KodeHauz (Internship)
+ROLE: Backend Engineering Intern
+START DATE: Jan 2026
+END DATE: Present (or leave blank)
+DESCRIPTION:
+Collaborated on building the WordWiz dictionary and vocabulary game backend using FastAPI and SQLModel. Designed and implemented Role-Based Access Control (RBAC) protecting endpoints for parents, teachers, and admins. Created real-time Server-Sent Events (SSE) streaming endpoints (`sse_stream.py`) using `sse-starlette` to broadcast system events and dictionary lookups. Integrated celery workers for async dictionary parsing and Gmail SMTP for transactional email delivery. Wrote unit and integration tests using pytest and managed Git workflows in an Agile/Scrum team.
+
+
+------------------------------------------------------------------------
+3. PROJECTS SHOWCASE
+------------------------------------------------------------------------
+
+=== PROJECT 1 ===
+TITLE: Skiflux Backend
+DESCRIPTION:
+Modular Clean Architecture (Service-Repository) EdTech backend built with Django 6.0.5. Features a custom wallet system for creator payouts, a gamification engine for student progress, AI-driven content moderation leveraging Gemini (Google GenAI), and Stripe/Adyen payment processing. Deployed with Sentry monitoring and GeoIP2 geolocation checks.
+TECH TAGS:
+Django 6.0, Django REST Framework, PostgreSQL, Redis 7.4, Celery 5.4, Stripe, Adyen, Google GenAI (Gemini), Firebase Admin, Resend, Sentry, GeoIP2
+LIVE URL:
+https://skiflux.up.railway.app/api/docs/
+REPO LINK:
+[Blank or none]
+ORDER INDEX:
+0
+
+=== PROJECT 2 ===
+TITLE: RemPro Backend
+DESCRIPTION:
+Decoupled MVT Django REST Framework backend facilitating freelancer-company matching. Features custom SimpleJWT authentication, Paystack split-payment API integration, escrow contract management, NIN and geolocation profile verification, and Cloudinary-signed Virtual Citizenship digital ID card generation.
+TECH TAGS:
+Django 6.0, Django REST Framework, SimpleJWT, PostgreSQL, Redis, Celery 5.6, Paystack, Cloudinary, django-celery-beat, WebSockets
+LIVE URL:
+https://bukola1.pythonanywhere.com/api/docs/
+REPO LINK:
+[Blank or none]
+ORDER INDEX:
+1
+
+=== PROJECT 3 ===
+TITLE: World Ticket Backend
+DESCRIPTION:
+High-performance ticketing backend API for the FIFA World Cup 2026 ticketing platform, built with FastAPI 0.115.0 and Async SQLAlchemy 2.0.36. Features event and section management, Stripe Deferred Intents payment flows, Slowapi endpoint rate limiting, and Celery tasks for background media uploads.
+TECH TAGS:
+FastAPI 0.115, SQLAlchemy (Async), Asyncpg 0.30, PostgreSQL, Stripe SDK, Slowapi, Celery, Redis 5.2, Alembic
+LIVE URL:
+[Blank or none]
+REPO LINK:
+[Blank or none]
+ORDER INDEX:
+2
+
+=== PROJECT 4 ===
+TITLE: WordWiz Backend
+DESCRIPTION:
+Vocabulary learning platform and dictionary parser backend built with FastAPI and SQLModel. Implements Parent-Teacher-Child RBAC roles, Server-Sent Events (SSE) streaming via `sse-starlette` for live lookups, and Celery async workers for heavy dictionary imports.
+TECH TAGS:
+FastAPI, SQLModel, PostgreSQL, SQLite, Celery, Redis, sse-starlette, Jinja2, Alembic
+LIVE URL:
+[Blank or none]
+REPO LINK:
+[Blank or none]
+ORDER INDEX:
+3
+
+=== PROJECT 5 ===
+TITLE: Bookify E-Library
+DESCRIPTION:
+Production-ready e-library management system backend. Serves 50+ concurrent users with 99% uptime, utilizing FastAPI, SQLAlchemy, Redis-powered database query caching, Cloudinary book cover uploads, and SendGrid transactional emails.
+TECH TAGS:
+FastAPI, PostgreSQL, SQLAlchemy, JWT, Cloudinary, Redis, SendGrid
+LIVE URL:
+https://be.bookify.kode.camp/docs
+REPO LINK:
+https://github.com/maandel/E-Library
+ORDER INDEX:
+4
+
+=== PROJECT 6 ===
+TITLE: Hotel Booking System
+DESCRIPTION:
+Full-stack room reservation application with date collision prevention, booking confirmation notifications, and a responsive Bootstrap dashboard interface.
+TECH TAGS:
+Flask, PostgreSQL, JavaScript, Bootstrap, HTML, CSS
+LIVE URL:
+[Blank or none]
+REPO LINK:
+https://github.com/maandel/hotel_booking
+ORDER INDEX:
+5
+
+=== PROJECT 7 ===
+TITLE: Developer Portfolio & CMS
+DESCRIPTION:
+Full-stack developer portfolio and CMS built with Next.js (statically exported and served) and a FastAPI backend. Features an administrative CMS dashboard to manage user profiles, experiences, projects, and technologies. Includes custom confirmation modals, secure JWT access/refresh token authentication, password reset flows with OTP verification stored in Redis, and background task integration for email alerts.
+TECH TAGS:
+FastAPI, Next.js, React, Tailwind CSS, PostgreSQL, Redis, JWT, Asynchronous Tasks, SMTP
+LIVE URL:
+[Blank or none]
+REPO LINK:
+https://github.com/maandel/portfolio
+ORDER INDEX:
+6
+
+
+------------------------------------------------------------------------
+4. TECHNOLOGIES STACK
+------------------------------------------------------------------------
+
+=== TECHNOLOGY 1 ===
+NAME: Python
+CATEGORY: Backend
+PROFICIENCY: 95
+ICON NAME: python
+ORDER INDEX: 0
+
+=== TECHNOLOGY 2 ===
+NAME: Django
+CATEGORY: Backend
+PROFICIENCY: 92
+ICON NAME: django
+ORDER INDEX: 1
+
+=== TECHNOLOGY 3 ===
+NAME: FastAPI
+CATEGORY: Backend
+PROFICIENCY: 90
+ICON NAME: fastapi
+ORDER INDEX: 2
+
+=== TECHNOLOGY 4 ===
+NAME: Flask
+CATEGORY: Backend
+PROFICIENCY: 80
+ICON NAME: flask
+ORDER INDEX: 3
+
+=== TECHNOLOGY 5 ===
+NAME: React / Next.js
+CATEGORY: Frontend
+PROFICIENCY: 85
+ICON NAME: react
+ORDER INDEX: 4
+
+=== TECHNOLOGY 6 ===
+NAME: Tailwind CSS
+CATEGORY: Frontend
+PROFICIENCY: 85
+ICON NAME: tailwind
+ORDER INDEX: 5
+
+=== TECHNOLOGY 7 ===
+NAME: PostgreSQL
+CATEGORY: Database
+PROFICIENCY: 85
+ICON NAME: postgresql
+ORDER INDEX: 6
+
+=== TECHNOLOGY 8 ===
+NAME: Redis
+CATEGORY: Database
+PROFICIENCY: 80
+ICON NAME: redis
+ORDER INDEX: 7
+
+=== TECHNOLOGY 9 ===
+NAME: Celery
+CATEGORY: Tools
+PROFICIENCY: 85
+ICON NAME: celery
+ORDER INDEX: 8
+
+=== TECHNOLOGY 10 ===
+NAME: Docker
+CATEGORY: Tools
+PROFICIENCY: 80
+ICON NAME: docker
+ORDER INDEX: 9
+
+=== TECHNOLOGY 11 ===
+NAME: Git / GitHub
+CATEGORY: Tools
+PROFICIENCY: 90
+ICON NAME: git
+ORDER INDEX: 10
+
+=== TECHNOLOGY 12 ===
+NAME: Paystack
+CATEGORY: Tools
+PROFICIENCY: 85
+ICON NAME: paystack
+ORDER INDEX: 11
+
+=== TECHNOLOGY 13 ===
+NAME: Stripe
+CATEGORY: Tools
+PROFICIENCY: 85
+ICON NAME: stripe
+ORDER INDEX: 12
+
+=== TECHNOLOGY 14 ===
+NAME: Cloudinary
+CATEGORY: Tools
+PROFICIENCY: 85
+ICON NAME: cloudinary
+ORDER INDEX: 13

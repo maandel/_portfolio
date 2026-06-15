@@ -75,7 +75,7 @@ export default function AdminLogin() {
             </div>
           )}
 
-          <form onSubmit={handleLogin} className="space-y-4 font-mono text-sm">
+          <form onSubmit={handleLogin} className="space-y-4 font-mono text-sm" autoComplete="on">
             <div className="space-y-1">
               <label htmlFor="email" className="block text-xs uppercase text-text-muted font-bold">Email Address</label>
               <div className="relative">
@@ -85,6 +85,8 @@ export default function AdminLogin() {
                 <input
                   type="email"
                   id="email"
+                  name="email"
+                  autoComplete="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="admin@mandell.tech"
@@ -109,6 +111,8 @@ export default function AdminLogin() {
                 <input
                   type="password"
                   id="password"
+                  name="password"
+                  autoComplete="current-password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"

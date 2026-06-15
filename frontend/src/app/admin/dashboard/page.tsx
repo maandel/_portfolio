@@ -5,7 +5,8 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
   Terminal, LogOut, User, Briefcase, Code, Settings, Plus, Trash2, Edit2,
-  Check, X, ShieldAlert, ShieldCheck, Database, Layers, ArrowLeft, Users, Shield, ShieldX, KeyRound, Loader2
+  Check, X, ShieldAlert, ShieldCheck, Database, Layers, ArrowLeft, Users, Shield, ShieldX, KeyRound, Loader2,
+  FolderOpen, Cpu, GitBranch, ExternalLink, UserX, UserCheck
 } from "lucide-react";
 import * as api from "@/lib/api";
 import ThemeToggle from "@/components/ThemeToggle";
@@ -73,6 +74,13 @@ export default function AdminDashboard() {
   const [userModalOpen, setUserModalOpen] = useState(false);
   const [editingUserId, setEditingUserId] = useState<number | null>(null);
   const [modalError, setModalError] = useState("");
+
+  // Pagination state
+  const PAGE_SIZE = 5;
+  const [expPage, setExpPage] = useState(1);
+  const [projPage, setProjPage] = useState(1);
+  const [techPage, setTechPage] = useState(1);
+  const [userPage, setUserPage] = useState(1);
 
   // Reusable confirmation modal state
   const [confirmModalOpen, setConfirmModalOpen] = useState(false);
@@ -161,6 +169,7 @@ export default function AdminDashboard() {
     try {
       const data = await api.getExperiences();
       setExperiences(data);
+      setExpPage(1);
     } catch (err) { console.error(err); }
   };
 
@@ -241,6 +250,7 @@ export default function AdminDashboard() {
     try {
       const data = await api.getProjects();
       setProjects(data);
+      setProjPage(1);
     } catch (err) { console.error(err); }
   };
 
@@ -322,6 +332,7 @@ export default function AdminDashboard() {
     try {
       const data = await api.getTechnologies();
       setTechs(data);
+      setTechPage(1);
     } catch (err) { console.error(err); }
   };
 
@@ -399,6 +410,7 @@ export default function AdminDashboard() {
     try {
       const data = await api.getUsersCMS();
       setUsers(data);
+      setUserPage(1);
     } catch (err: any) {
       console.error(err);
       if (err.message && (err.message.includes("401") || err.message.includes("Unauthorized") || err.message.includes("credentials"))) {
@@ -507,6 +519,75 @@ export default function AdminDashboard() {
     localStorage.removeItem("admin_refresh_token");
     localStorage.removeItem("admin_email");
     router.replace("/admin/login");
+  };
+
+  // Reusable Pagination component
+  const Pagination = ({
+    total, page, onPage
+  }: { total: number; page: number; onPage: (p: number) => void }) => {
+    const totalPages = Math.ceil(total / PAGE_SIZE);
+    if (totalPages <= 1) return null;
+    return (
+      <div className="flex items-center justify-between pt-3 border-t border-card-border mt-2">
+        <span className="text-xs font-mono text-text-muted">
+          Page {page} of {totalPages} &nbsp;&middot;&nbsp; {total} records
+        </span>
+        <div className="flex items-center space-x-1">
+          <button
+            onClick={() => onPage(1)}
+            disabled={page === 1}
+            className="px-2 py-1 text-xs font-mono rounded border border-card-border hover:bg-card-border/40 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-colors"
+          >
+            «
+          </button>
+          <button
+            onClick={() => onPage(page - 1)}
+            disabled={page === 1}
+            className="px-2 py-1 text-xs font-mono rounded border border-card-border hover:bg-card-border/40 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-colors"
+          >
+            ‹ Prev
+          </button>
+          {Array.from({ length: totalPages }, (_, i) => i + 1)
+            .filter(p => p === 1 || p === totalPages || Math.abs(p - page) <= 1)
+            .reduce<(number | "...")[]>((acc, p, idx, arr) => {
+              if (idx > 0 && p - (arr[idx - 1] as number) > 1) acc.push("...");
+              acc.push(p);
+              return acc;
+            }, [])
+            .map((p, i) =>
+              p === "..." ? (
+                <span key={`ellipsis-${i}`} className="px-1.5 text-xs text-text-muted font-mono">…</span>
+              ) : (
+                <button
+                  key={p}
+                  onClick={() => onPage(p as number)}
+                  className={`px-2.5 py-1 text-xs font-mono rounded border transition-colors cursor-pointer ${
+                    page === p
+                      ? "bg-primary-500 border-primary-500 text-white"
+                      : "border-card-border hover:bg-card-border/40"
+                  }`}
+                >
+                  {p}
+                </button>
+              )
+            )}
+          <button
+            onClick={() => onPage(page + 1)}
+            disabled={page === totalPages}
+            className="px-2 py-1 text-xs font-mono rounded border border-card-border hover:bg-card-border/40 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-colors"
+          >
+            Next ›
+          </button>
+          <button
+            onClick={() => onPage(totalPages)}
+            disabled={page === totalPages}
+            className="px-2 py-1 text-xs font-mono rounded border border-card-border hover:bg-card-border/40 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-colors"
+          >
+            »
+          </button>
+        </div>
+      </div>
+    );
   };
 
   if (!authorized) {
@@ -789,44 +870,63 @@ export default function AdminDashboard() {
               </div>
 
               {/* Experiences Table */}
-              <div className="overflow-x-auto border border-card-border rounded-lg">
+              <div className="overflow-x-auto border border-card-border rounded-xl">
                 <table className="w-full text-left border-collapse font-sans text-sm">
                   <thead>
-                    <tr className="bg-card-bg/80 border-b border-card-border text-xs uppercase font-bold text-text-muted">
-                      <th className="p-4">Company</th>
-                      <th className="p-4">Role</th>
-                      <th className="p-4">Dates</th>
-                      <th className="p-4">Order</th>
-                      <th className="p-4 text-right">Actions</th>
+                    <tr className="bg-card-bg/80 border-b border-card-border">
+                      <th className="px-4 py-2.5 text-[11px] uppercase font-semibold tracking-wider text-text-muted">Company</th>
+                      <th className="px-4 py-2.5 text-[11px] uppercase font-semibold tracking-wider text-text-muted">Role</th>
+                      <th className="px-4 py-2.5 text-[11px] uppercase font-semibold tracking-wider text-text-muted">Period</th>
+                      <th className="px-4 py-2.5 text-[11px] uppercase font-semibold tracking-wider text-text-muted text-center">Order</th>
+                      <th className="px-4 py-2.5 text-[11px] uppercase font-semibold tracking-wider text-text-muted text-right">Actions</th>
                     </tr>
                   </thead>
-                  <tbody>
+                  <tbody className="divide-y divide-card-border/60">
                     {experiences.length === 0 ? (
                       <tr>
-                        <td colSpan={5} className="p-4 text-center text-text-muted font-mono text-xs">no_records_found</td>
+                        <td colSpan={5} className="py-12 text-center">
+                          <div className="flex flex-col items-center gap-2 text-text-muted">
+                            <Briefcase className="w-8 h-8 opacity-30" />
+                            <span className="text-xs font-mono">No experience records yet</span>
+                          </div>
+                        </td>
                       </tr>
                     ) : (
-                      experiences.map((exp) => (
-                        <tr key={exp.id} className="border-b border-card-border hover:bg-card-bg/25 transition-colors">
-                          <td className="p-4 font-bold">{exp.company}</td>
-                          <td className="p-4">{exp.role}</td>
-                          <td className="p-4 text-xs font-mono">{exp.start_date} - {exp.end_date || "Present"}</td>
-                          <td className="p-4 font-mono text-xs">{exp.order_index}</td>
-                          <td className="p-4 text-right flex justify-end space-x-2">
-                            <button
-                              onClick={() => openEditExp(exp)}
-                              disabled={loadingExp}
-                              className="p-1.5 rounded border border-card-border hover:border-primary-500 hover:text-primary-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
-                            >
-                              <Edit2 className="w-3.5 h-3.5" />
-                            </button>
-                            <button
-                              onClick={() => handleDeleteExp(exp.id)}
-                              disabled={loadingExp}
-                              className="p-1.5 rounded border border-card-border hover:border-red-500 hover:text-red-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
+                      experiences.slice((expPage - 1) * PAGE_SIZE, expPage * PAGE_SIZE).map((exp) => (
+                        <tr key={exp.id} className="hover:bg-primary-500/5 transition-colors group">
+                          <td className="px-4 py-3">
+                            <span className="font-semibold text-sm">{exp.company}</span>
+                          </td>
+                          <td className="px-4 py-3">
+                            <span className="text-sm text-text-secondary">{exp.role}</span>
+                          </td>
+                          <td className="px-4 py-3">
+                            <span className="inline-flex items-center gap-1 text-[11px] font-mono bg-card-border/30 text-text-muted px-2 py-1 rounded-full whitespace-nowrap">
+                              {exp.start_date} → {exp.end_date || <span className="text-green-400">Present</span>}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 text-center">
+                            <span className="inline-block w-6 h-6 rounded-full bg-card-border/40 text-[11px] font-mono font-bold leading-6 text-center">{exp.order_index}</span>
+                          </td>
+                          <td className="px-4 py-3">
+                            <div className="flex justify-end items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <button
+                                onClick={() => openEditExp(exp)}
+                                disabled={loadingExp}
+                                title="Edit"
+                                className="p-1.5 rounded-lg border border-card-border hover:border-primary-500 hover:text-primary-500 hover:bg-primary-500/10 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
+                              >
+                                <Edit2 className="w-3.5 h-3.5" />
+                              </button>
+                              <button
+                                onClick={() => handleDeleteExp(exp.id)}
+                                disabled={loadingExp}
+                                title="Delete"
+                                className="p-1.5 rounded-lg border border-card-border hover:border-red-500 hover:text-red-500 hover:bg-red-500/10 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       ))
@@ -834,6 +934,7 @@ export default function AdminDashboard() {
                   </tbody>
                 </table>
               </div>
+              <Pagination total={experiences.length} page={expPage} onPage={setExpPage} />
             </div>
           )}
 
@@ -856,61 +957,108 @@ export default function AdminDashboard() {
               </div>
 
               {/* Projects Table */}
-              <div className="overflow-x-auto border border-card-border rounded-lg">
+              <div className="overflow-x-auto border border-card-border rounded-xl">
                 <table className="w-full text-left border-collapse font-sans text-sm">
                   <thead>
-                    <tr className="bg-card-bg/80 border-b border-card-border text-xs uppercase font-bold text-text-muted">
-                      <th className="p-4">Title</th>
-                      <th className="p-4">Tags</th>
-                      <th className="p-4">GitHub</th>
-                      <th className="p-4">Live</th>
-                      <th className="p-4">Order</th>
-                      <th className="p-4 text-right">Actions</th>
+                    <tr className="bg-card-bg/80 border-b border-card-border">
+                      <th className="px-4 py-2.5 text-[11px] uppercase font-semibold tracking-wider text-text-muted">Project</th>
+                      <th className="px-4 py-2.5 text-[11px] uppercase font-semibold tracking-wider text-text-muted">Tech Stack</th>
+                      <th className="px-4 py-2.5 text-[11px] uppercase font-semibold tracking-wider text-text-muted text-center">Links</th>
+                      <th className="px-4 py-2.5 text-[11px] uppercase font-semibold tracking-wider text-text-muted text-center">Order</th>
+                      <th className="px-4 py-2.5 text-[11px] uppercase font-semibold tracking-wider text-text-muted text-right">Actions</th>
                     </tr>
                   </thead>
-                  <tbody>
+                  <tbody className="divide-y divide-card-border/60">
                     {projects.length === 0 ? (
                       <tr>
-                        <td colSpan={6} className="p-4 text-center text-text-muted font-mono text-xs">no_records_found</td>
+                        <td colSpan={5} className="py-12 text-center">
+                          <div className="flex flex-col items-center gap-2 text-text-muted">
+                            <FolderOpen className="w-8 h-8 opacity-30" />
+                            <span className="text-xs font-mono">No projects added yet</span>
+                          </div>
+                        </td>
                       </tr>
                     ) : (
-                      projects.map((proj) => (
-                        <tr key={proj.id} className="border-b border-card-border hover:bg-card-bg/25 transition-colors">
-                          <td className="p-4 font-bold">{proj.title}</td>
-                          <td className="p-4">
-                            <div className="flex flex-wrap gap-1">
-                              {proj.tech_tags.map((tag: string, i: number) => (
-                                <span key={i} className="text-[10px] font-mono bg-card-border/40 px-1.5 py-0.5 rounded text-text-muted">
-                                  #{tag}
-                                </span>
-                              ))}
-                            </div>
-                          </td>
-                          <td className="p-4 text-xs font-mono truncate max-w-xs">{proj.repo_link || "null"}</td>
-                          <td className="p-4 text-xs font-mono truncate max-w-xs">{proj.live_link || "null"}</td>
-                          <td className="p-4 font-mono text-xs">{proj.order_index}</td>
-                          <td className="p-4 text-right flex justify-end space-x-2">
-                            <button
-                              onClick={() => openEditProj(proj)}
-                              disabled={loadingProj}
-                              className="p-1.5 rounded border border-card-border hover:border-primary-500 hover:text-primary-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
-                            >
-                              <Edit2 className="w-3.5 h-3.5" />
-                            </button>
-                            <button
-                              onClick={() => handleDeleteProj(proj.id)}
-                              disabled={loadingProj}
-                              className="p-1.5 rounded border border-card-border hover:border-red-500 hover:text-red-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
-                          </td>
-                        </tr>
-                      ))
+                      projects.slice((projPage - 1) * PAGE_SIZE, projPage * PAGE_SIZE).map((proj) => {
+                        const visibleTags = proj.tech_tags.slice(0, 3);
+                        const extraCount = proj.tech_tags.length - 3;
+                        return (
+                          <tr key={proj.id} className="hover:bg-primary-500/5 transition-colors group">
+                            <td className="px-4 py-3">
+                              <div>
+                                <p className="font-semibold text-sm leading-tight">{proj.title}</p>
+                                {proj.description && (
+                                  <p className="text-[11px] text-text-muted mt-0.5 line-clamp-1 max-w-[180px]">{proj.description}</p>
+                                )}
+                              </div>
+                            </td>
+                            <td className="px-4 py-3">
+                              <div className="flex items-center gap-1 flex-wrap">
+                                {visibleTags.map((tag: string, i: number) => (
+                                  <span key={i} className="text-[10px] font-mono bg-primary-500/10 text-primary-400 border border-primary-500/20 px-1.5 py-0.5 rounded-md whitespace-nowrap">
+                                    {tag}
+                                  </span>
+                                ))}
+                                {extraCount > 0 && (
+                                  <span className="text-[10px] font-mono bg-card-border/40 text-text-muted px-1.5 py-0.5 rounded-md" title={proj.tech_tags.slice(3).join(", ")}>
+                                    +{extraCount}
+                                  </span>
+                                )}
+                              </div>
+                            </td>
+                            <td className="px-4 py-3">
+                              <div className="flex items-center justify-center gap-2">
+                                {proj.repo_link ? (
+                                  <a href={proj.repo_link} target="_blank" rel="noreferrer" title={proj.repo_link}
+                                    className="p-1.5 rounded-lg border border-card-border hover:border-primary-500 hover:text-primary-500 hover:bg-primary-500/10 transition-all"
+                                  >
+                                    <GitBranch className="w-3.5 h-3.5" />
+                                  </a>
+                                ) : (
+                                  <span className="p-1.5 opacity-20"><GitBranch className="w-3.5 h-3.5" /></span>
+                                )}
+                                {proj.live_link ? (
+                                  <a href={proj.live_link} target="_blank" rel="noreferrer" title={proj.live_link}
+                                    className="p-1.5 rounded-lg border border-card-border hover:border-green-500 hover:text-green-400 hover:bg-green-500/10 transition-all"
+                                  >
+                                    <ExternalLink className="w-3.5 h-3.5" />
+                                  </a>
+                                ) : (
+                                  <span className="p-1.5 opacity-20"><ExternalLink className="w-3.5 h-3.5" /></span>
+                                )}
+                              </div>
+                            </td>
+                            <td className="px-4 py-3 text-center">
+                              <span className="inline-block w-6 h-6 rounded-full bg-card-border/40 text-[11px] font-mono font-bold leading-6 text-center">{proj.order_index}</span>
+                            </td>
+                            <td className="px-4 py-3">
+                              <div className="flex justify-end items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <button
+                                  onClick={() => openEditProj(proj)}
+                                  disabled={loadingProj}
+                                  title="Edit"
+                                  className="p-1.5 rounded-lg border border-card-border hover:border-primary-500 hover:text-primary-500 hover:bg-primary-500/10 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
+                                >
+                                  <Edit2 className="w-3.5 h-3.5" />
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteProj(proj.id)}
+                                  disabled={loadingProj}
+                                  title="Delete"
+                                  className="p-1.5 rounded-lg border border-card-border hover:border-red-500 hover:text-red-500 hover:bg-red-500/10 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })
                     )}
                   </tbody>
                 </table>
               </div>
+              <Pagination total={projects.length} page={projPage} onPage={setProjPage} />
             </div>
           )}
 
@@ -933,50 +1081,83 @@ export default function AdminDashboard() {
               </div>
 
               {/* Technologies Table */}
-              <div className="overflow-x-auto border border-card-border rounded-lg">
+              <div className="overflow-x-auto border border-card-border rounded-xl">
                 <table className="w-full text-left border-collapse font-sans text-sm">
                   <thead>
-                    <tr className="bg-card-bg/80 border-b border-card-border text-xs uppercase font-bold text-text-muted">
-                      <th className="p-4">Name</th>
-                      <th className="p-4">Category</th>
-                      <th className="p-4">Proficiency</th>
-                      <th className="p-4">Icon Name</th>
-                      <th className="p-4">Order</th>
-                      <th className="p-4 text-right">Actions</th>
+                    <tr className="bg-card-bg/80 border-b border-card-border">
+                      <th className="px-4 py-2.5 text-[11px] uppercase font-semibold tracking-wider text-text-muted">Technology</th>
+                      <th className="px-4 py-2.5 text-[11px] uppercase font-semibold tracking-wider text-text-muted">Category</th>
+                      <th className="px-4 py-2.5 text-[11px] uppercase font-semibold tracking-wider text-text-muted">Proficiency</th>
+                      <th className="px-4 py-2.5 text-[11px] uppercase font-semibold tracking-wider text-text-muted">Icon Key</th>
+                      <th className="px-4 py-2.5 text-[11px] uppercase font-semibold tracking-wider text-text-muted text-center">Order</th>
+                      <th className="px-4 py-2.5 text-[11px] uppercase font-semibold tracking-wider text-text-muted text-right">Actions</th>
                     </tr>
                   </thead>
-                  <tbody>
+                  <tbody className="divide-y divide-card-border/60">
                     {techs.length === 0 ? (
                       <tr>
-                        <td colSpan={6} className="p-4 text-center text-text-muted font-mono text-xs">no_records_found</td>
+                        <td colSpan={6} className="py-12 text-center">
+                          <div className="flex flex-col items-center gap-2 text-text-muted">
+                            <Cpu className="w-8 h-8 opacity-30" />
+                            <span className="text-xs font-mono">No technologies added yet</span>
+                          </div>
+                        </td>
                       </tr>
                     ) : (
-                      techs.map((tech) => (
-                        <tr key={tech.id} className="border-b border-card-border hover:bg-card-bg/25 transition-colors">
-                          <td className="p-4 font-bold">{tech.name}</td>
-                          <td className="p-4 font-mono text-xs">
-                            <span className="bg-card-border/50 text-text-muted px-2 py-0.5 rounded text-[10px]">
+                      techs.slice((techPage - 1) * PAGE_SIZE, techPage * PAGE_SIZE).map((tech) => (
+                        <tr key={tech.id} className="hover:bg-primary-500/5 transition-colors group">
+                          <td className="px-4 py-3">
+                            <span className="font-semibold text-sm">{tech.name}</span>
+                          </td>
+                          <td className="px-4 py-3">
+                            <span className="text-[10px] font-semibold uppercase tracking-wider bg-violet-500/10 text-violet-400 border border-violet-500/20 px-2 py-0.5 rounded-full">
                               {tech.category}
                             </span>
                           </td>
-                          <td className="p-4 font-mono text-xs">{tech.proficiency ? `${tech.proficiency}%` : "null"}</td>
-                          <td className="p-4 font-mono text-xs text-text-muted">{tech.icon_name || "null"}</td>
-                          <td className="p-4 font-mono text-xs">{tech.order_index}</td>
-                          <td className="p-4 text-right flex justify-end space-x-2">
-                            <button
-                              onClick={() => openEditTech(tech)}
-                              disabled={loadingTech}
-                              className="p-1.5 rounded border border-card-border hover:border-primary-500 hover:text-primary-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
-                            >
-                              <Edit2 className="w-3.5 h-3.5" />
-                            </button>
-                            <button
-                              onClick={() => handleDeleteTech(tech.id)}
-                              disabled={loadingTech}
-                              className="p-1.5 rounded border border-card-border hover:border-red-500 hover:text-red-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
+                          <td className="px-4 py-3">
+                            {tech.proficiency ? (
+                              <div className="flex items-center gap-2">
+                                <div className="flex-1 h-1.5 bg-card-border/50 rounded-full overflow-hidden w-24">
+                                  <div
+                                    className="h-full bg-primary-500 rounded-full transition-all"
+                                    style={{ width: `${tech.proficiency}%` }}
+                                  />
+                                </div>
+                                <span className="text-[11px] font-mono text-text-muted tabular-nums">{tech.proficiency}%</span>
+                              </div>
+                            ) : (
+                              <span className="text-[11px] text-text-muted/40 font-mono">—</span>
+                            )}
+                          </td>
+                          <td className="px-4 py-3">
+                            {tech.icon_name ? (
+                              <code className="text-[11px] bg-card-border/30 text-amber-400 px-2 py-0.5 rounded font-mono">{tech.icon_name}</code>
+                            ) : (
+                              <span className="text-[11px] text-text-muted/40 font-mono">—</span>
+                            )}
+                          </td>
+                          <td className="px-4 py-3 text-center">
+                            <span className="inline-block w-6 h-6 rounded-full bg-card-border/40 text-[11px] font-mono font-bold leading-6 text-center">{tech.order_index}</span>
+                          </td>
+                          <td className="px-4 py-3">
+                            <div className="flex justify-end items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <button
+                                onClick={() => openEditTech(tech)}
+                                disabled={loadingTech}
+                                title="Edit"
+                                className="p-1.5 rounded-lg border border-card-border hover:border-primary-500 hover:text-primary-500 hover:bg-primary-500/10 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
+                              >
+                                <Edit2 className="w-3.5 h-3.5" />
+                              </button>
+                              <button
+                                onClick={() => handleDeleteTech(tech.id)}
+                                disabled={loadingTech}
+                                title="Delete"
+                                className="p-1.5 rounded-lg border border-card-border hover:border-red-500 hover:text-red-500 hover:bg-red-500/10 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       ))
@@ -984,6 +1165,7 @@ export default function AdminDashboard() {
                   </tbody>
                 </table>
               </div>
+              <Pagination total={techs.length} page={techPage} onPage={setTechPage} />
             </div>
           )}
 
@@ -1006,43 +1188,58 @@ export default function AdminDashboard() {
               </div>
 
               {/* Users Table */}
-              <div className="overflow-x-auto border border-card-border rounded-lg">
+              <div className="overflow-x-auto border border-card-border rounded-xl">
                 <table className="w-full text-left border-collapse font-sans text-sm">
                   <thead>
-                    <tr className="bg-card-bg/80 border-b border-card-border text-xs uppercase font-bold text-text-muted">
-                      <th className="p-4">ID</th>
-                      <th className="p-4">Email Address</th>
-                      <th className="p-4">System Role</th>
-                      <th className="p-4">Status</th>
-                      <th className="p-4 text-right">Actions</th>
+                    <tr className="bg-card-bg/80 border-b border-card-border">
+                      <th className="px-4 py-2.5 text-[11px] uppercase font-semibold tracking-wider text-text-muted">User</th>
+                      <th className="px-4 py-2.5 text-[11px] uppercase font-semibold tracking-wider text-text-muted text-center">Role</th>
+                      <th className="px-4 py-2.5 text-[11px] uppercase font-semibold tracking-wider text-text-muted text-center">Status</th>
+                      <th className="px-4 py-2.5 text-[11px] uppercase font-semibold tracking-wider text-text-muted text-right">Actions</th>
                     </tr>
                   </thead>
-                  <tbody>
+                  <tbody className="divide-y divide-card-border/60">
                     {users.length === 0 ? (
                       <tr>
-                        <td colSpan={5} className="p-4 text-center text-text-muted font-mono text-xs">no_records_found</td>
+                        <td colSpan={4} className="py-12 text-center">
+                          <div className="flex flex-col items-center gap-2 text-text-muted">
+                            <Users className="w-8 h-8 opacity-30" />
+                            <span className="text-xs font-mono">No users found</span>
+                          </div>
+                        </td>
                       </tr>
                     ) : (
-                      users.map((u) => (
-                        <tr key={u.id} className="border-b border-card-border hover:bg-card-bg/25 transition-colors">
-                          <td className="p-4 font-mono text-xs">{u.id}</td>
-                          <td className="p-4 font-mono text-sm">{u.email}</td>
-                          <td className="p-4 font-mono text-xs">
-                            <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] uppercase font-bold ${
-                              u.is_admin ? "bg-amber-500/10 text-amber-500 border border-amber-500/20" : "bg-blue-500/10 text-blue-500 border border-blue-500/20"
+                      users.slice((userPage - 1) * PAGE_SIZE, userPage * PAGE_SIZE).map((u) => (
+                        <tr key={u.id} className="hover:bg-primary-500/5 transition-colors group">
+                          <td className="px-4 py-3">
+                            <div className="flex items-center gap-2.5">
+                              <div className="w-8 h-8 rounded-full bg-primary-500/15 border border-primary-500/20 flex items-center justify-center flex-shrink-0">
+                                <span className="text-[11px] font-bold text-primary-400 uppercase">{u.email.charAt(0)}</span>
+                              </div>
+                              <div>
+                                <p className="text-sm font-medium">{u.email}</p>
+                                <p className="text-[10px] text-text-muted font-mono">id: {u.id}</p>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-4 py-3 text-center">
+                            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] uppercase font-bold tracking-wide ${
+                              u.is_admin ? "bg-amber-500/10 text-amber-400 border border-amber-500/20" : "bg-sky-500/10 text-sky-400 border border-sky-500/20"
                             }`}>
-                              <Shield className="w-3 h-3 mr-0.5" />
-                              {u.is_admin ? "Administrator" : "User"}
+                              <Shield className="w-2.5 h-2.5" />
+                              {u.is_admin ? "Admin" : "User"}
                             </span>
                           </td>
-                          <td className="p-4 font-mono text-xs">
-                            <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold ${
-                              u.is_active ? "bg-green-500/10 text-green-500 border border-green-500/20" : "bg-red-500/10 text-red-500 border border-red-500/20"
+                          <td className="px-4 py-3 text-center">
+                            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold tracking-wide ${
+                              u.is_active ? "bg-green-500/10 text-green-400 border border-green-500/20" : "bg-red-500/10 text-red-400 border border-red-500/20"
                             }`}>
-                              {u.is_active ? "ACTIVE" : "INACTIVE"}
+                              <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${ u.is_active ? "bg-green-400" : "bg-red-400" }`} />
+                              {u.is_active ? "Active" : "Inactive"}
                             </span>
                           </td>
-                          <td className="p-4 text-right flex justify-end items-center space-x-2">
+                          <td className="px-4 py-3">
+                            <div className="flex justify-end items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
                             <button
                               onClick={() => {
                                 setEditingUserId(u.id);
@@ -1052,36 +1249,38 @@ export default function AdminDashboard() {
                                 setUserModalOpen(true);
                               }}
                               disabled={loadingUser}
-                              className="p-1.5 rounded border border-card-border hover:border-primary-500 hover:text-primary-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer flex items-center justify-center"
-                              title="Edit User Details / Password"
+                              className="p-1.5 rounded-lg border border-card-border hover:border-primary-500 hover:text-primary-500 hover:bg-primary-500/10 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
+                              title="Edit User"
                             >
                               <Edit2 className="w-3.5 h-3.5" />
                             </button>
                             {u.email === adminEmail ? (
-                              <span className="text-xs text-text-muted italic px-2 py-1 select-none">Active Admin</span>
+                              <span className="text-[10px] text-text-muted italic px-2 py-1 select-none bg-card-border/30 rounded-lg">You</span>
                             ) : (
                               <>
                                 <button
                                   onClick={() => handleToggleUserStatus(u)}
                                   disabled={loadingUser}
-                                  className={`inline-flex items-center space-x-1 px-2.5 py-1.5 rounded text-xs font-mono font-bold border transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${
+                                  title={u.is_active ? "Deactivate user" : "Activate user"}
+                                  className={`p-1.5 rounded-lg border transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed ${
                                     u.is_active 
-                                      ? "bg-red-500/10 border-red-500/20 text-red-500 hover:bg-red-500/20" 
-                                      : "bg-green-500/10 border-green-500/20 text-green-500 hover:bg-green-500/20"
+                                      ? "border-red-500/20 text-red-400 hover:bg-red-500/10 hover:border-red-500" 
+                                      : "border-green-500/20 text-green-400 hover:bg-green-500/10 hover:border-green-500"
                                   }`}
                                 >
-                                  {u.is_active ? "Deactivate" : "Activate"}
+                                  {u.is_active ? <UserX className="w-3.5 h-3.5" /> : <UserCheck className="w-3.5 h-3.5" />}
                                 </button>
                                 <button
                                   onClick={() => handleDeleteUser(u.id, u.email)}
                                   disabled={loadingUser}
-                                  className="p-1.5 rounded border border-card-border hover:border-red-500 hover:text-red-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer flex items-center justify-center"
-                                  title="Delete User permanently"
+                                  className="p-1.5 rounded-lg border border-card-border hover:border-red-500 hover:text-red-500 hover:bg-red-500/10 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
+                                  title="Delete permanently"
                                 >
                                   <Trash2 className="w-3.5 h-3.5" />
                                 </button>
                               </>
                             )}
+                          </div>
                           </td>
                         </tr>
                       ))
@@ -1089,6 +1288,7 @@ export default function AdminDashboard() {
                   </tbody>
                 </table>
               </div>
+              <Pagination total={users.length} page={userPage} onPage={setUserPage} />
             </div>
           )}
 

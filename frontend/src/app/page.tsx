@@ -441,37 +441,92 @@ export default function Home() {
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-            {techs.map((tech, idx) => (
+            {techs.map((tech, idx) => {
+              // Simple Icons uses slightly different slugs for some names
+              const simpleIconSlug = (tech.icon_name || "")
+                .replace("tailwindcss", "tailwindcss")
+                .replace("nextjs", "nextdotjs")
+                .replace("postgresql", "postgresql")
+                .toLowerCase();
+
+              const TechIcon = () => {
+                const [stage, setStage] = useState<"devicon-orig" | "devicon-plain" | "simple" | "fallback">(
+                  tech.icon_name ? "devicon-orig" : "fallback"
+                );
+
+                if (stage === "fallback" || !tech.icon_name) {
+                  return (
+                    <span className="text-text-muted group-hover:text-cyber-green transition-colors">
+                      {tech.category === "Backend" && <Code className="w-6 h-6" />}
+                      {tech.category === "Database" && <Database className="w-6 h-6" />}
+                      {tech.category === "DevOps" && <Settings className="w-6 h-6" />}
+                      {!["Backend", "Database", "DevOps"].includes(tech.category) && <Layers className="w-6 h-6" />}
+                    </span>
+                  );
+                }
+
+                const srcs: Record<string, string> = {
+                  "devicon-orig": `https://cdn.jsdelivr.net/gh/devicons/devicon/icons/${tech.icon_name}/${tech.icon_name}-original.svg`,
+                  "devicon-plain": `https://cdn.jsdelivr.net/gh/devicons/devicon/icons/${tech.icon_name}/${tech.icon_name}-plain.svg`,
+                  "simple": `https://cdn.simpleicons.org/${simpleIconSlug}/10b981`,
+                };
+
+                const nextStage: Record<string, "devicon-orig" | "devicon-plain" | "simple" | "fallback"> = {
+                  "devicon-orig": "devicon-plain",
+                  "devicon-plain": "simple",
+                  "simple": "fallback",
+                };
+
+                return (
+                  <img
+                    src={srcs[stage]}
+                    alt={tech.name}
+                    className="w-8 h-8 object-contain"
+                    onError={() => setStage(nextStage[stage])}
+                  />
+                );
+              };
+
+              return (
               <motion.div
                 key={idx}
                 whileHover={{ y: -5, borderColor: "rgba(16, 185, 129, 0.4)" }}
-                className="bg-card-bg border border-card-border p-5 rounded-xl flex flex-col justify-between h-32 transition-all relative overflow-hidden group cursor-default"
+                className="bg-card-bg border border-card-border p-4 rounded-xl flex flex-col justify-between h-36 transition-all relative overflow-hidden group cursor-default"
               >
-                {/* Background glow hover index */}
+                {/* Background glow on hover */}
                 <div className="absolute inset-0 bg-gradient-to-br from-cyber-green/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
 
-                <div className="flex items-center justify-between text-text-muted group-hover:text-cyber-green transition-colors">
-                  {tech.category === "Backend" && <Code className="w-6 h-6" />}
-                  {tech.category === "Database" && <Database className="w-6 h-6" />}
-                  {tech.category === "DevOps" && <Settings className="w-6 h-6" />}
-                  {!["Backend", "Database", "DevOps"].includes(tech.category) && <Layers className="w-6 h-6" />}
-
-                  <span className="text-[10px] font-mono uppercase bg-card-border/50 px-2 py-0.5 rounded text-text-muted">
+                {/* Icon row */}
+                <div className="flex items-start justify-between">
+                  <div className="w-9 h-9 flex items-center justify-center">
+                    <TechIcon />
+                  </div>
+                  <span className="text-[10px] font-mono uppercase bg-card-border/50 px-1.5 py-0.5 rounded text-text-muted leading-tight">
                     {tech.category}
                   </span>
                 </div>
 
-                <div className="space-y-1 relative z-10">
-                  <h3 className="font-bold text-sm tracking-tight">{tech.name}</h3>
+                {/* Name + proficiency */}
+                <div className="space-y-1.5 relative z-10">
+                  <h3 className="font-bold text-sm tracking-tight leading-tight">{tech.name}</h3>
                   {tech.proficiency && (
-                    <div className="flex items-center justify-between text-[10px] font-mono text-text-muted">
-                      <span>Proficiency</span>
-                      <span className="font-bold text-cyber-green">{tech.proficiency}%</span>
+                    <div className="space-y-0.5">
+                      <div className="flex justify-between text-[9px] font-mono text-text-muted">
+                        <span>proficiency</span>
+                        <span className="text-cyber-green font-bold">{tech.proficiency}%</span>
+                      </div>
+                      <div className="h-0.5 bg-card-border/50 rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-cyber-green rounded-full"
+                          style={{ width: `${tech.proficiency}%` }}
+                        />
+                      </div>
                     </div>
                   )}
                 </div>
               </motion.div>
-            ))}
+              );
+            })}
           </div>
         </section>
 
