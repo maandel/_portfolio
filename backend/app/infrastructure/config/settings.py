@@ -28,6 +28,10 @@ class Settings(BaseSettings):
     SMTP_PASSWORD: str = "your_app_password"
     SMTP_FROM_EMAIL: str = "your_email@gmail.com"
     SMTP_TO_EMAIL: str | None = None
+    SMTP_USE_SSL: bool | None = None
+    SMTP_USE_STARTTLS: bool = True
+    SMTP_TIMEOUT_SECONDS: int = 10
+    EMAIL_FALLBACK_TO_FILE: bool = False
 
     ADMIN_EMAIL: str = "admin@mandell.tech"
     ADMIN_PASSWORD: str | None = None
@@ -38,6 +42,12 @@ class Settings(BaseSettings):
         env_file=(".env", "../.env"),
         extra="ignore",
     )
+
+    @property
+    def use_ssl(self) -> bool:
+        if self.SMTP_USE_SSL is not None:
+            return self.SMTP_USE_SSL
+        return self.SMTP_PORT == 465
 
     @property
     def allowed_origins_list(self) -> list[str]:
