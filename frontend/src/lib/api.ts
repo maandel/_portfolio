@@ -58,15 +58,43 @@ export async function adminLogin(data: any) {
   return res.json();
 }
 
-export async function adminSignup(data: any) {
-  const res = await fetch(`${API_URL}/api/v1/auth/signup`, {
+export async function getUsersCMS() {
+  const res = await fetch(`${API_URL}/api/v1/users`, {
+    method: "GET",
+    headers: getAuthHeaders(),
+  });
+  if (!res.ok) {
+    if (res.status === 401) {
+      throw new Error("Unauthorized access (401). Please log in again.");
+    }
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.detail || "Failed to fetch users");
+  }
+  return res.json();
+}
+
+export async function createUserCMS(data: any) {
+  const res = await fetch(`${API_URL}/api/v1/users`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: getAuthHeaders(),
     body: JSON.stringify(data),
   });
   if (!res.ok) {
     const errorData = await res.json().catch(() => ({}));
-    throw new Error(errorData.detail || "Signup failed");
+    throw new Error(errorData.detail || "Failed to create user");
+  }
+  return res.json();
+}
+
+export async function updateUserStatusCMS(id: number, isActive: boolean) {
+  const res = await fetch(`${API_URL}/api/v1/users/${id}/status`, {
+    method: "PUT",
+    headers: getAuthHeaders(),
+    body: JSON.stringify({ is_active: isActive }),
+  });
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.detail || "Failed to update user status");
   }
   return res.json();
 }
@@ -204,5 +232,30 @@ export async function deleteTechnologyCMS(id: number) {
     headers: getAuthHeaders(),
   });
   if (!res.ok) throw new Error("Failed to delete technology");
+  return true;
+}
+
+export async function updateUserCMS(id: number, data: any) {
+  const res = await fetch(`${API_URL}/api/v1/users/${id}`, {
+    method: "PUT",
+    headers: getAuthHeaders(),
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.detail || "Failed to update user");
+  }
+  return res.json();
+}
+
+export async function deleteUserCMS(id: number) {
+  const res = await fetch(`${API_URL}/api/v1/users/${id}`, {
+    method: "DELETE",
+    headers: getAuthHeaders(),
+  });
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.detail || "Failed to delete user");
+  }
   return true;
 }

@@ -1,20 +1,22 @@
 import datetime
-import random
+import secrets
 import string
-from typing import Dict, Any, Optional
+from typing import Any, Dict, Optional
+
 import bcrypt
 import jwt
 
 from app.domain.entities import User
-from app.domain.interfaces import IUserRepository, IOTPStore, IEmailService
+from app.domain.interfaces import IEmailService, IOTPStore, IUserRepository
 from app.infrastructure.config.settings import settings
 
-# --- Password Helpers ---
+
 def hash_password(password: str) -> str:
     pwd_bytes = password.encode("utf-8")
     salt = bcrypt.gensalt()
     hashed = bcrypt.hashpw(pwd_bytes, salt)
     return hashed.decode("utf-8")
+
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     try:
@@ -24,13 +26,14 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
     except Exception:
         return False
 
-# --- JWT Helpers ---
+
 def create_access_token(subject: str) -> str:
     expire = datetime.datetime.utcnow() + datetime.timedelta(
         minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES
     )
     to_encode = {"exp": expire, "sub": str(subject), "type": "access"}
     return jwt.encode(to_encode, settings.JWT_SECRET, algorithm=settings.JWT_ALGORITHM)
+
 
 def create_refresh_token(subject: str) -> str:
     expire = datetime.datetime.utcnow() + datetime.timedelta(
@@ -40,25 +43,48 @@ def create_refresh_token(subject: str) -> str:
     return jwt.encode(to_encode, settings.JWT_SECRET, algorithm=settings.JWT_ALGORITHM)
 
 
-# --- Use Cases ---
-
 class AuthUseCases:
     def __init__(self, user_repo: IUserRepository):
         self.user_repo = user_repo
 
-    async def signup(self, email: str, password: str) -> User:
+    async def create_user(
+        self, email: str, password: str, is_admin: bool = False
+    ) -> User:
         existing = await self.user_repo.get_by_email(email)
         if existing:
             raise ValueError("User with this email already registered")
 
         hashed_pwd = hash_password(password)
         new_user = User(
-            email=email,
-            hashed_password=hashed_pwd,
-            is_active=True,
-            is_admin=True
+            email=email, hashed_password=hashed_pwd, is_active=True, is_admin=is_admin
         )
         return await self.user_repo.create(new_user)
+
+    async def update_user(
+        self,
+        user_id: int,
+        email: Optional[str] = None,
+        password: Optional[str] = None,
+        is_admin: Optional[bool] = None,
+    ) -> User:
+        if email is not None:
+            existing = await self.user_repo.get_by_email(email)
+            if existing and existing.id != user_id:
+                raise ValueError("User with this email already registered")
+
+        hashed_pwd = None
+        if password is not None and password != "":
+            hashed_pwd = hash_password(password)
+
+        updated_user = await self.user_repo.update_user(
+            user_id=user_id,
+            email=email,
+            hashed_password=hashed_pwd,
+            is_admin=is_admin,
+        )
+        if not updated_user:
+            raise ValueError("User not found")
+        return updated_user
 
     async def login(self, email: str, password: str) -> Dict[str, Any]:
         user = await self.user_repo.get_by_email(email)
@@ -76,22 +102,16 @@ class AuthUseCases:
         }
 
     async def forgot_password(
-        self,
-        email: str,
-        otp_store: IOTPStore,
-        email_service: IEmailService
+        self, email: str, otp_store: IOTPStore, email_service: IEmailService
     ) -> None:
         user = await self.user_repo.get_by_email(email)
         if not user:
             raise ValueError("User with this email does not exist")
 
-        # Generate 6-digit OTP
-        otp = "".join(random.choices(string.digits, k=6))
+        otp = "".join(secrets.choice(string.digits) for _ in range(6))
 
-        # Save in OTP cache store (valid for 10 minutes - 600s)
         await otp_store.set_otp(email, otp, ttl_seconds=600)
 
-        # Dispatch async notification email
         await email_service.send_otp(email, otp)
 
     async def verify_otp(self, email: str, otp: str, otp_store: IOTPStore) -> None:
@@ -101,31 +121,24 @@ class AuthUseCases:
         if stored_otp != otp:
             raise ValueError("Invalid 6-digit OTP")
 
-        # Set verified flag (valid for 5 minutes - 300s)
         await otp_store.set_verified_flag(email, ttl_seconds=300)
 
     async def reset_password(
-        self,
-        email: str,
-        otp: str,
-        new_password: str,
-        otp_store: IOTPStore
+        self, email: str, otp: str, new_password: str, otp_store: IOTPStore
     ) -> None:
-        # Check if email is verified
         verified = await otp_store.get_verified_flag(email)
         stored_otp = await otp_store.get_otp(email)
 
         if not verified and (not stored_otp or stored_otp != otp):
-            raise ValueError("You must verify your OTP before resetting password or OTP is incorrect")
+            raise ValueError(
+                "You must verify your OTP before resetting password or OTP is incorrect"
+            )
 
         user = await self.user_repo.get_by_email(email)
         if not user:
             raise ValueError("User not found")
 
-        # Hash and save password
         hashed_pwd = hash_password(new_password)
         await self.user_repo.update_password(email, hashed_pwd)
-
-        # Delete tags
         await otp_store.delete_otp(email)
         await otp_store.delete_verified_flag(email)

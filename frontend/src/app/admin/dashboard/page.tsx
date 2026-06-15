@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
   Terminal, LogOut, User, Briefcase, Code, Settings, Plus, Trash2, Edit2,
-  Check, X, ShieldAlert, ShieldCheck, Database, Layers, ArrowLeft
+  Check, X, ShieldAlert, ShieldCheck, Database, Layers, ArrowLeft, Users, Shield, ShieldX, KeyRound, Loader2
 } from "lucide-react";
 import * as api from "@/lib/api";
 import ThemeToggle from "@/components/ThemeToggle";
@@ -15,10 +15,16 @@ export default function AdminDashboard() {
 
   const [authorized, setAuthorized] = useState(false);
   const [adminEmail, setAdminEmail] = useState("");
-  const [activeTab, setActiveTab] = useState<"bio" | "experiences" | "projects" | "technologies">("bio");
+  const [activeTab, setActiveTab] = useState<"bio" | "experiences" | "projects" | "technologies" | "users">("bio");
 
   const [successMsg, setSuccessMsg] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
+
+  const [loadingBio, setLoadingBio] = useState(false);
+  const [loadingExp, setLoadingExp] = useState(false);
+  const [loadingProj, setLoadingProj] = useState(false);
+  const [loadingTech, setLoadingTech] = useState(false);
+  const [loadingUser, setLoadingUser] = useState(false);
 
   const [bioName, setBioName] = useState("");
   const [bioTitle, setBioTitle] = useState("");
@@ -60,6 +66,29 @@ export default function AdminDashboard() {
   const [techOrder, setTechOrder] = useState(0);
   const [techModalOpen, setTechModalOpen] = useState(false);
 
+  const [users, setUsers] = useState<any[]>([]);
+  const [userEmail, setUserEmail] = useState("");
+  const [userPassword, setUserPassword] = useState("");
+  const [userIsAdmin, setUserIsAdmin] = useState(false);
+  const [userModalOpen, setUserModalOpen] = useState(false);
+  const [editingUserId, setEditingUserId] = useState<number | null>(null);
+  const [modalError, setModalError] = useState("");
+
+  // Reusable confirmation modal state
+  const [confirmModalOpen, setConfirmModalOpen] = useState(false);
+  const [confirmModalTitle, setConfirmModalTitle] = useState("");
+  const [confirmModalMessage, setConfirmModalMessage] = useState("");
+  const [confirmModalAction, setConfirmModalAction] = useState<() => Promise<void> | void>(() => {});
+  const [confirmModalType, setConfirmModalType] = useState<"danger" | "warning" | "info">("danger");
+
+  const showConfirm = (title: string, message: string, onConfirm: () => Promise<void> | void, type: "danger" | "warning" | "info" = "danger") => {
+    setConfirmModalTitle(title);
+    setConfirmModalMessage(message);
+    setConfirmModalAction(() => onConfirm);
+    setConfirmModalType(type);
+    setConfirmModalOpen(true);
+  };
+
   useEffect(() => {
     const token = localStorage.getItem("admin_token");
     if (!token) {
@@ -73,6 +102,7 @@ export default function AdminDashboard() {
     loadExperiencesData();
     loadProjectsData();
     loadTechnologiesData();
+    loadUsersData();
   }, [router]);
 
   const showSuccess = (msg: string) => {
@@ -106,6 +136,7 @@ export default function AdminDashboard() {
   const handleUpdateBio = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg("");
+    setLoadingBio(true);
     try {
       await api.updateProfileCMS({
         name: bioName,
@@ -121,6 +152,8 @@ export default function AdminDashboard() {
       showSuccess("Bio information updated successfully!");
     } catch (err: any) {
       showError(err.message || "Failed to update profile.");
+    } finally {
+      setLoadingBio(false);
     }
   };
 
@@ -132,6 +165,7 @@ export default function AdminDashboard() {
   };
 
   const openAddExp = () => {
+    setModalError("");
     setExpId(null);
     setExpCompany("");
     setExpRole("");
@@ -143,6 +177,7 @@ export default function AdminDashboard() {
   };
 
   const openEditExp = (exp: any) => {
+    setModalError("");
     setExpId(exp.id);
     setExpCompany(exp.company);
     setExpRole(exp.role);
@@ -155,6 +190,8 @@ export default function AdminDashboard() {
 
   const handleSaveExp = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLoadingExp(true);
+    setModalError("");
     try {
       const payload = {
         company: expCompany,
@@ -174,19 +211,30 @@ export default function AdminDashboard() {
       setExpModalOpen(false);
       loadExperiencesData();
     } catch (err: any) {
-      showError(err.message || "Failed to save experience.");
+      setModalError(err.message || "Failed to save experience.");
+    } finally {
+      setLoadingExp(false);
     }
   };
 
   const handleDeleteExp = async (id: number) => {
-    if (!confirm("Are you sure you want to delete this experience record?")) return;
-    try {
-      await api.deleteExperienceCMS(id);
-      showSuccess("Experience deleted!");
-      loadExperiencesData();
-    } catch (err: any) {
-      showError(err.message || "Failed to delete experience.");
-    }
+    showConfirm(
+      "Delete Experience",
+      "Are you sure you want to delete this experience record?",
+      async () => {
+        setLoadingExp(true);
+        try {
+          await api.deleteExperienceCMS(id);
+          showSuccess("Experience deleted!");
+          loadExperiencesData();
+        } catch (err: any) {
+          showError(err.message || "Failed to delete experience.");
+        } finally {
+          setLoadingExp(false);
+        }
+      },
+      "danger"
+    );
   };
 
   const loadProjectsData = async () => {
@@ -197,6 +245,7 @@ export default function AdminDashboard() {
   };
 
   const openAddProj = () => {
+    setModalError("");
     setProjId(null);
     setProjTitle("");
     setProjDesc("");
@@ -208,6 +257,7 @@ export default function AdminDashboard() {
   };
 
   const openEditProj = (proj: any) => {
+    setModalError("");
     setProjId(proj.id);
     setProjTitle(proj.title);
     setProjDesc(proj.description);
@@ -220,6 +270,8 @@ export default function AdminDashboard() {
 
   const handleSaveProj = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLoadingProj(true);
+    setModalError("");
     try {
       const tagsList = projTags.split(",").map(t => t.trim()).filter(Boolean);
       const payload = {
@@ -240,19 +292,30 @@ export default function AdminDashboard() {
       setProjModalOpen(false);
       loadProjectsData();
     } catch (err: any) {
-      showError(err.message || "Failed to save project.");
+      setModalError(err.message || "Failed to save project.");
+    } finally {
+      setLoadingProj(false);
     }
   };
 
   const handleDeleteProj = async (id: number) => {
-    if (!confirm("Are you sure you want to delete this project record?")) return;
-    try {
-      await api.deleteProjectCMS(id);
-      showSuccess("Project deleted!");
-      loadProjectsData();
-    } catch (err: any) {
-      showError(err.message || "Failed to delete project.");
-    }
+    showConfirm(
+      "Delete Project",
+      "Are you sure you want to delete this project record?",
+      async () => {
+        setLoadingProj(true);
+        try {
+          await api.deleteProjectCMS(id);
+          showSuccess("Project deleted!");
+          loadProjectsData();
+        } catch (err: any) {
+          showError(err.message || "Failed to delete project.");
+        } finally {
+          setLoadingProj(false);
+        }
+      },
+      "danger"
+    );
   };
 
   const loadTechnologiesData = async () => {
@@ -263,6 +326,7 @@ export default function AdminDashboard() {
   };
 
   const openAddTech = () => {
+    setModalError("");
     setTechId(null);
     setTechName("");
     setTechCategory("Backend");
@@ -273,6 +337,7 @@ export default function AdminDashboard() {
   };
 
   const openEditTech = (tech: any) => {
+    setModalError("");
     setTechId(tech.id);
     setTechName(tech.name);
     setTechCategory(tech.category);
@@ -284,6 +349,8 @@ export default function AdminDashboard() {
 
   const handleSaveTech = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLoadingTech(true);
+    setModalError("");
     try {
       const payload = {
         name: techName,
@@ -302,19 +369,137 @@ export default function AdminDashboard() {
       setTechModalOpen(false);
       loadTechnologiesData();
     } catch (err: any) {
-      showError(err.message || "Failed to save technology.");
+      setModalError(err.message || "Failed to save technology.");
+    } finally {
+      setLoadingTech(false);
     }
   };
 
   const handleDeleteTech = async (id: number) => {
-    if (!confirm("Are you sure you want to delete this technology record?")) return;
+    showConfirm(
+      "Delete Technology",
+      "Are you sure you want to delete this technology record?",
+      async () => {
+        setLoadingTech(true);
+        try {
+          await api.deleteTechnologyCMS(id);
+          showSuccess("Technology deleted!");
+          loadTechnologiesData();
+        } catch (err: any) {
+          showError(err.message || "Failed to delete technology.");
+        } finally {
+          setLoadingTech(false);
+        }
+      },
+      "danger"
+    );
+  };
+
+  const loadUsersData = async () => {
     try {
-      await api.deleteTechnologyCMS(id);
-      showSuccess("Technology deleted!");
-      loadTechnologiesData();
+      const data = await api.getUsersCMS();
+      setUsers(data);
     } catch (err: any) {
-      showError(err.message || "Failed to delete technology.");
+      console.error(err);
+      if (err.message && (err.message.includes("401") || err.message.includes("Unauthorized") || err.message.includes("credentials"))) {
+        handleLogout();
+      }
     }
+  };
+
+  const openAddUser = () => {
+    setModalError("");
+    setEditingUserId(null);
+    setUserEmail("");
+    setUserPassword("");
+    setUserIsAdmin(false);
+    setUserModalOpen(true);
+  };
+
+  const handleToggleUserStatus = async (user: any) => {
+    if (user.email === adminEmail) {
+      showError("You cannot deactivate your own administrative account.");
+      return;
+    }
+    const newStatus = !user.is_active;
+    const action = newStatus ? "reactivate" : "deactivate";
+    showConfirm(
+      `${newStatus ? "Reactivate" : "Deactivate"} User`,
+      `Are you sure you want to ${action} user ${user.email}?`,
+      async () => {
+        setLoadingUser(true);
+        try {
+          await api.updateUserStatusCMS(user.id, newStatus);
+          showSuccess(`User ${user.email} has been successfully ${newStatus ? 'reactivated' : 'deactivated'}!`);
+          loadUsersData();
+        } catch (err: any) {
+          showError(err.message || "Failed to update user status.");
+        } finally {
+          setLoadingUser(false);
+        }
+      },
+      newStatus ? "info" : "warning"
+    );
+  };
+
+  const handleSaveUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoadingUser(true);
+    setModalError("");
+    try {
+      if (editingUserId) {
+        const payload: any = {
+          email: userEmail,
+          is_admin: userIsAdmin
+        };
+        if (userPassword) {
+          payload.password = userPassword;
+        }
+        await api.updateUserCMS(editingUserId, payload);
+        showSuccess(`Successfully updated user details for: ${userEmail}`);
+        if (editingUserId === users.find(u => u.email === adminEmail)?.id) {
+          localStorage.setItem("admin_email", userEmail);
+          setAdminEmail(userEmail);
+        }
+      } else {
+        await api.createUserCMS({
+          email: userEmail,
+          password: userPassword,
+          is_admin: userIsAdmin
+        });
+        showSuccess(`Successfully registered new credentials: ${userEmail}`);
+      }
+      setUserModalOpen(false);
+      setEditingUserId(null);
+      setUserEmail("");
+      setUserPassword("");
+      setUserIsAdmin(false);
+      loadUsersData();
+    } catch (err: any) {
+      setModalError(err.message || "Failed to save user.");
+    } finally {
+      setLoadingUser(false);
+    }
+  };
+
+  const handleDeleteUser = async (id: number, email: string) => {
+    showConfirm(
+      "Delete User",
+      `Are you sure you want to permanently delete the user account for ${email}? This action cannot be undone.`,
+      async () => {
+        setLoadingUser(true);
+        try {
+          await api.deleteUserCMS(id);
+          showSuccess(`User ${email} has been permanently deleted!`);
+          loadUsersData();
+        } catch (err: any) {
+          showError(err.message || "Failed to delete user.");
+        } finally {
+          setLoadingUser(false);
+        }
+      },
+      "danger"
+    );
   };
 
   const handleLogout = () => {
@@ -412,6 +597,16 @@ export default function AdminDashboard() {
             <Database className="w-4 h-4" />
             <span>Technologies Stack</span>
           </button>
+          <button
+            onClick={() => setActiveTab("users")}
+            className={`w-full text-left px-4 py-2.5 rounded-lg text-sm font-medium transition-colors flex items-center space-x-3 cursor-pointer ${activeTab === "users"
+                ? "bg-primary-500 text-white"
+                : "bg-card-bg border border-card-border hover:bg-card-border/30"
+              }`}
+          >
+            <Users className="w-4 h-4" />
+            <span>User Management</span>
+          </button>
 
           {/* Quick CMS Diagnostics */}
           <div className="mt-8 p-4 rounded-lg bg-card-bg border border-card-border font-mono text-[10px] text-text-muted space-y-2 select-text">
@@ -460,7 +655,8 @@ export default function AdminDashboard() {
                       type="text"
                       value={bioName}
                       onChange={(e) => setBioName(e.target.value)}
-                      className="w-full bg-background border border-card-border rounded p-2 focus:outline-none focus:border-primary-500 font-sans"
+                      disabled={loadingBio}
+                      className="w-full bg-background border border-card-border rounded p-2 focus:outline-none focus:border-primary-500 font-sans disabled:opacity-50 disabled:cursor-not-allowed"
                       required
                     />
                   </div>
@@ -470,7 +666,8 @@ export default function AdminDashboard() {
                       type="text"
                       value={bioTitle}
                       onChange={(e) => setBioTitle(e.target.value)}
-                      className="w-full bg-background border border-card-border rounded p-2 focus:outline-none focus:border-primary-500 font-sans"
+                      disabled={loadingBio}
+                      className="w-full bg-background border border-card-border rounded p-2 focus:outline-none focus:border-primary-500 font-sans disabled:opacity-50 disabled:cursor-not-allowed"
                       required
                     />
                   </div>
@@ -482,7 +679,8 @@ export default function AdminDashboard() {
                     rows={4}
                     value={bioAbout}
                     onChange={(e) => setBioAbout(e.target.value)}
-                    className="w-full bg-background border border-card-border rounded p-2 focus:outline-none focus:border-primary-500 font-sans text-sm leading-relaxed"
+                    disabled={loadingBio}
+                    className="w-full bg-background border border-card-border rounded p-2 focus:outline-none focus:border-primary-500 font-sans text-sm leading-relaxed disabled:opacity-50 disabled:cursor-not-allowed"
                     required
                   />
                 </div>
@@ -494,7 +692,8 @@ export default function AdminDashboard() {
                       type="email"
                       value={bioEmail}
                       onChange={(e) => setBioEmail(e.target.value)}
-                      className="w-full bg-background border border-card-border rounded p-2 focus:outline-none focus:border-primary-500 font-sans"
+                      disabled={loadingBio}
+                      className="w-full bg-background border border-card-border rounded p-2 focus:outline-none focus:border-primary-500 font-sans disabled:opacity-50 disabled:cursor-not-allowed"
                       required
                     />
                   </div>
@@ -504,7 +703,8 @@ export default function AdminDashboard() {
                       type="text"
                       value={bioAvatar}
                       onChange={(e) => setBioAvatar(e.target.value)}
-                      className="w-full bg-background border border-card-border rounded p-2 focus:outline-none focus:border-primary-500 font-sans"
+                      disabled={loadingBio}
+                      className="w-full bg-background border border-card-border rounded p-2 focus:outline-none focus:border-primary-500 font-sans disabled:opacity-50 disabled:cursor-not-allowed"
                     />
                   </div>
                   <div className="space-y-1">
@@ -513,7 +713,8 @@ export default function AdminDashboard() {
                       type="text"
                       value={bioResume}
                       onChange={(e) => setBioResume(e.target.value)}
-                      className="w-full bg-background border border-card-border rounded p-2 focus:outline-none focus:border-primary-500 font-sans"
+                      disabled={loadingBio}
+                      className="w-full bg-background border border-card-border rounded p-2 focus:outline-none focus:border-primary-500 font-sans disabled:opacity-50 disabled:cursor-not-allowed"
                     />
                   </div>
                 </div>
@@ -525,7 +726,8 @@ export default function AdminDashboard() {
                       type="text"
                       value={bioGithub}
                       onChange={(e) => setBioGithub(e.target.value)}
-                      className="w-full bg-background border border-card-border rounded p-2 focus:outline-none focus:border-primary-500 font-sans"
+                      disabled={loadingBio}
+                      className="w-full bg-background border border-card-border rounded p-2 focus:outline-none focus:border-primary-500 font-sans disabled:opacity-50 disabled:cursor-not-allowed"
                     />
                   </div>
                   <div className="space-y-1">
@@ -534,7 +736,8 @@ export default function AdminDashboard() {
                       type="text"
                       value={bioLinkedin}
                       onChange={(e) => setBioLinkedin(e.target.value)}
-                      className="w-full bg-background border border-card-border rounded p-2 focus:outline-none focus:border-primary-500 font-sans"
+                      disabled={loadingBio}
+                      className="w-full bg-background border border-card-border rounded p-2 focus:outline-none focus:border-primary-500 font-sans disabled:opacity-50 disabled:cursor-not-allowed"
                     />
                   </div>
                   <div className="space-y-1">
@@ -543,16 +746,25 @@ export default function AdminDashboard() {
                       type="text"
                       value={bioTwitter}
                       onChange={(e) => setBioTwitter(e.target.value)}
-                      className="w-full bg-background border border-card-border rounded p-2 focus:outline-none focus:border-primary-500 font-sans"
+                      disabled={loadingBio}
+                      className="w-full bg-background border border-card-border rounded p-2 focus:outline-none focus:border-primary-500 font-sans disabled:opacity-50 disabled:cursor-not-allowed"
                     />
                   </div>
                 </div>
 
                 <button
                   type="submit"
-                  className="px-5 py-2.5 bg-primary-500 hover:bg-primary-600 text-white rounded font-bold cursor-pointer transition-colors"
+                  disabled={loadingBio}
+                  className="px-5 py-2.5 bg-primary-500 hover:bg-primary-600 disabled:bg-card-border disabled:opacity-50 disabled:cursor-not-allowed text-white rounded font-bold cursor-pointer transition-colors flex items-center justify-center space-x-2"
                 >
-                  Save Profile Settings
+                  {loadingBio ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin shrink-0" />
+                      <span>Saving Profile Settings...</span>
+                    </>
+                  ) : (
+                    <span>Save Profile Settings</span>
+                  )}
                 </button>
               </form>
             </div>
@@ -568,7 +780,8 @@ export default function AdminDashboard() {
                 </div>
                 <button
                   onClick={openAddExp}
-                  className="inline-flex items-center space-x-1 px-3 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded text-xs font-mono font-bold cursor-pointer transition-colors"
+                  disabled={loadingExp}
+                  className="inline-flex items-center space-x-1 px-3 py-2 bg-primary-500 hover:bg-primary-600 disabled:bg-card-border text-white rounded text-xs font-mono font-bold cursor-pointer transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <Plus className="w-4 h-4" />
                   <span>Add Experience</span>
@@ -602,13 +815,15 @@ export default function AdminDashboard() {
                           <td className="p-4 text-right flex justify-end space-x-2">
                             <button
                               onClick={() => openEditExp(exp)}
-                              className="p-1.5 rounded border border-card-border hover:border-primary-500 hover:text-primary-500 transition-colors cursor-pointer"
+                              disabled={loadingExp}
+                              className="p-1.5 rounded border border-card-border hover:border-primary-500 hover:text-primary-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
                             >
                               <Edit2 className="w-3.5 h-3.5" />
                             </button>
                             <button
                               onClick={() => handleDeleteExp(exp.id)}
-                              className="p-1.5 rounded border border-card-border hover:border-red-500 hover:text-red-500 transition-colors cursor-pointer"
+                              disabled={loadingExp}
+                              className="p-1.5 rounded border border-card-border hover:border-red-500 hover:text-red-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
                             >
                               <Trash2 className="w-3.5 h-3.5" />
                             </button>
@@ -632,7 +847,8 @@ export default function AdminDashboard() {
                 </div>
                 <button
                   onClick={openAddProj}
-                  className="inline-flex items-center space-x-1 px-3 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded text-xs font-mono font-bold cursor-pointer transition-colors"
+                  disabled={loadingProj}
+                  className="inline-flex items-center space-x-1 px-3 py-2 bg-primary-500 hover:bg-primary-600 disabled:bg-card-border text-white rounded text-xs font-mono font-bold cursor-pointer transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <Plus className="w-4 h-4" />
                   <span>Add Project</span>
@@ -676,13 +892,15 @@ export default function AdminDashboard() {
                           <td className="p-4 text-right flex justify-end space-x-2">
                             <button
                               onClick={() => openEditProj(proj)}
-                              className="p-1.5 rounded border border-card-border hover:border-primary-500 hover:text-primary-500 transition-colors cursor-pointer"
+                              disabled={loadingProj}
+                              className="p-1.5 rounded border border-card-border hover:border-primary-500 hover:text-primary-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
                             >
                               <Edit2 className="w-3.5 h-3.5" />
                             </button>
                             <button
                               onClick={() => handleDeleteProj(proj.id)}
-                              className="p-1.5 rounded border border-card-border hover:border-red-500 hover:text-red-500 transition-colors cursor-pointer"
+                              disabled={loadingProj}
+                              className="p-1.5 rounded border border-card-border hover:border-red-500 hover:text-red-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
                             >
                               <Trash2 className="w-3.5 h-3.5" />
                             </button>
@@ -706,7 +924,8 @@ export default function AdminDashboard() {
                 </div>
                 <button
                   onClick={openAddTech}
-                  className="inline-flex items-center space-x-1 px-3 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded text-xs font-mono font-bold cursor-pointer transition-colors"
+                  disabled={loadingTech}
+                  className="inline-flex items-center space-x-1 px-3 py-2 bg-primary-500 hover:bg-primary-600 disabled:bg-card-border text-white rounded text-xs font-mono font-bold cursor-pointer transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <Plus className="w-4 h-4" />
                   <span>Add Tech</span>
@@ -746,16 +965,123 @@ export default function AdminDashboard() {
                           <td className="p-4 text-right flex justify-end space-x-2">
                             <button
                               onClick={() => openEditTech(tech)}
-                              className="p-1.5 rounded border border-card-border hover:border-primary-500 hover:text-primary-500 transition-colors cursor-pointer"
+                              disabled={loadingTech}
+                              className="p-1.5 rounded border border-card-border hover:border-primary-500 hover:text-primary-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
                             >
                               <Edit2 className="w-3.5 h-3.5" />
                             </button>
                             <button
                               onClick={() => handleDeleteTech(tech.id)}
-                              className="p-1.5 rounded border border-card-border hover:border-red-500 hover:text-red-500 transition-colors cursor-pointer"
+                              disabled={loadingTech}
+                              className="p-1.5 rounded border border-card-border hover:border-red-500 hover:text-red-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
                             >
                               <Trash2 className="w-3.5 h-3.5" />
                             </button>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* 5. USER MANAGEMENT TAB */}
+          {activeTab === "users" && (
+            <div className="space-y-6">
+              <div className="border-b border-card-border pb-4 flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg font-bold tracking-tight">User Management</h3>
+                  <p className="text-xs text-text-muted font-mono">performs: GET/POST/PUT /api/v1/users</p>
+                </div>
+                <button
+                  onClick={openAddUser}
+                  disabled={loadingUser}
+                  className="inline-flex items-center space-x-1 px-3 py-2 bg-primary-500 hover:bg-primary-600 disabled:bg-card-border text-white rounded text-xs font-mono font-bold cursor-pointer transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>Add Admin/User</span>
+                </button>
+              </div>
+
+              {/* Users Table */}
+              <div className="overflow-x-auto border border-card-border rounded-lg">
+                <table className="w-full text-left border-collapse font-sans text-sm">
+                  <thead>
+                    <tr className="bg-card-bg/80 border-b border-card-border text-xs uppercase font-bold text-text-muted">
+                      <th className="p-4">ID</th>
+                      <th className="p-4">Email Address</th>
+                      <th className="p-4">System Role</th>
+                      <th className="p-4">Status</th>
+                      <th className="p-4 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {users.length === 0 ? (
+                      <tr>
+                        <td colSpan={5} className="p-4 text-center text-text-muted font-mono text-xs">no_records_found</td>
+                      </tr>
+                    ) : (
+                      users.map((u) => (
+                        <tr key={u.id} className="border-b border-card-border hover:bg-card-bg/25 transition-colors">
+                          <td className="p-4 font-mono text-xs">{u.id}</td>
+                          <td className="p-4 font-mono text-sm">{u.email}</td>
+                          <td className="p-4 font-mono text-xs">
+                            <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] uppercase font-bold ${
+                              u.is_admin ? "bg-amber-500/10 text-amber-500 border border-amber-500/20" : "bg-blue-500/10 text-blue-500 border border-blue-500/20"
+                            }`}>
+                              <Shield className="w-3 h-3 mr-0.5" />
+                              {u.is_admin ? "Administrator" : "User"}
+                            </span>
+                          </td>
+                          <td className="p-4 font-mono text-xs">
+                            <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold ${
+                              u.is_active ? "bg-green-500/10 text-green-500 border border-green-500/20" : "bg-red-500/10 text-red-500 border border-red-500/20"
+                            }`}>
+                              {u.is_active ? "ACTIVE" : "INACTIVE"}
+                            </span>
+                          </td>
+                          <td className="p-4 text-right flex justify-end items-center space-x-2">
+                            <button
+                              onClick={() => {
+                                setEditingUserId(u.id);
+                                setUserEmail(u.email);
+                                setUserPassword("");
+                                setUserIsAdmin(u.is_admin);
+                                setUserModalOpen(true);
+                              }}
+                              disabled={loadingUser}
+                              className="p-1.5 rounded border border-card-border hover:border-primary-500 hover:text-primary-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer flex items-center justify-center"
+                              title="Edit User Details / Password"
+                            >
+                              <Edit2 className="w-3.5 h-3.5" />
+                            </button>
+                            {u.email === adminEmail ? (
+                              <span className="text-xs text-text-muted italic px-2 py-1 select-none">Active Admin</span>
+                            ) : (
+                              <>
+                                <button
+                                  onClick={() => handleToggleUserStatus(u)}
+                                  disabled={loadingUser}
+                                  className={`inline-flex items-center space-x-1 px-2.5 py-1.5 rounded text-xs font-mono font-bold border transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${
+                                    u.is_active 
+                                      ? "bg-red-500/10 border-red-500/20 text-red-500 hover:bg-red-500/20" 
+                                      : "bg-green-500/10 border-green-500/20 text-green-500 hover:bg-green-500/20"
+                                  }`}
+                                >
+                                  {u.is_active ? "Deactivate" : "Activate"}
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteUser(u.id, u.email)}
+                                  disabled={loadingUser}
+                                  className="p-1.5 rounded border border-card-border hover:border-red-500 hover:text-red-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer flex items-center justify-center"
+                                  title="Delete User permanently"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                              </>
+                            )}
                           </td>
                         </tr>
                       ))
@@ -784,6 +1110,13 @@ export default function AdminDashboard() {
               </button>
             </div>
 
+            {modalError && (
+              <div className="p-3 bg-red-500/10 border border-red-500/20 text-red-500 rounded-lg text-xs font-mono flex items-center space-x-2">
+                <ShieldAlert className="w-4 h-4 shrink-0" />
+                <span>{modalError}</span>
+              </div>
+            )}
+
             <form onSubmit={handleSaveExp} className="space-y-4 font-mono text-sm">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1">
@@ -792,7 +1125,8 @@ export default function AdminDashboard() {
                     type="text"
                     value={expCompany}
                     onChange={(e) => setExpCompany(e.target.value)}
-                    className="w-full bg-background border border-card-border rounded p-2 focus:outline-none focus:border-primary-500 font-sans"
+                    disabled={loadingExp}
+                    className="w-full bg-background border border-card-border rounded p-2 focus:outline-none focus:border-primary-500 font-sans disabled:opacity-50 disabled:cursor-not-allowed"
                     required
                   />
                 </div>
@@ -802,7 +1136,8 @@ export default function AdminDashboard() {
                     type="text"
                     value={expRole}
                     onChange={(e) => setExpRole(e.target.value)}
-                    className="w-full bg-background border border-card-border rounded p-2 focus:outline-none focus:border-primary-500 font-sans"
+                    disabled={loadingExp}
+                    className="w-full bg-background border border-card-border rounded p-2 focus:outline-none focus:border-primary-500 font-sans disabled:opacity-50 disabled:cursor-not-allowed"
                     required
                   />
                 </div>
@@ -816,7 +1151,8 @@ export default function AdminDashboard() {
                     value={expStart}
                     onChange={(e) => setExpStart(e.target.value)}
                     placeholder="e.g. Jan 2026"
-                    className="w-full bg-background border border-card-border rounded p-2 focus:outline-none"
+                    disabled={loadingExp}
+                    className="w-full bg-background border border-card-border rounded p-2 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
                     required
                   />
                 </div>
@@ -827,7 +1163,8 @@ export default function AdminDashboard() {
                     value={expEnd}
                     onChange={(e) => setExpEnd(e.target.value)}
                     placeholder="e.g. Dec 2026 or Present"
-                    className="w-full bg-background border border-card-border rounded p-2 focus:outline-none"
+                    disabled={loadingExp}
+                    className="w-full bg-background border border-card-border rounded p-2 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
                   />
                 </div>
                 <div className="space-y-1">
@@ -836,7 +1173,8 @@ export default function AdminDashboard() {
                     type="number"
                     value={expOrder}
                     onChange={(e) => setExpOrder(parseInt(e.target.value) || 0)}
-                    className="w-full bg-background border border-card-border rounded p-2 focus:outline-none"
+                    disabled={loadingExp}
+                    className="w-full bg-background border border-card-border rounded p-2 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
                     required
                   />
                 </div>
@@ -848,7 +1186,8 @@ export default function AdminDashboard() {
                   rows={4}
                   value={expDesc}
                   onChange={(e) => setExpDesc(e.target.value)}
-                  className="w-full bg-background border border-card-border rounded p-2 focus:outline-none focus:border-primary-500 font-sans"
+                  disabled={loadingExp}
+                  className="w-full bg-background border border-card-border rounded p-2 focus:outline-none focus:border-primary-500 font-sans disabled:opacity-50 disabled:cursor-not-allowed"
                   required
                 />
               </div>
@@ -857,15 +1196,24 @@ export default function AdminDashboard() {
                 <button
                   type="button"
                   onClick={() => setExpModalOpen(false)}
-                  className="px-4 py-2 bg-background border border-card-border hover:bg-card-bg rounded font-bold transition-colors cursor-pointer"
+                  disabled={loadingExp}
+                  className="px-4 py-2 bg-background border border-card-border hover:bg-card-bg rounded font-bold transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded font-bold transition-colors cursor-pointer"
+                  disabled={loadingExp}
+                  className="inline-flex items-center space-x-2 px-4 py-2 bg-primary-500 hover:bg-primary-600 disabled:bg-card-border text-white rounded font-bold transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Save Record
+                  {loadingExp ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin shrink-0" />
+                      <span>Saving...</span>
+                    </>
+                  ) : (
+                    <span>Save Record</span>
+                  )}
                 </button>
               </div>
             </form>
@@ -881,10 +1229,21 @@ export default function AdminDashboard() {
               <h4 className="text-md font-bold font-mono">
                 {projId ? `edit_project_record: ${projId}` : "add_project_record"}
               </h4>
-              <button onClick={() => setProjModalOpen(false)} className="text-text-muted hover:text-foreground cursor-pointer">
+              <button 
+                onClick={() => setProjModalOpen(false)} 
+                disabled={loadingProj}
+                className="text-text-muted hover:text-foreground cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              >
                 <X className="w-5 h-5" />
               </button>
             </div>
+
+            {modalError && (
+              <div className="p-3 bg-red-500/10 border border-red-500/20 text-red-500 rounded-lg text-xs font-mono flex items-center space-x-2">
+                <ShieldAlert className="w-4 h-4 shrink-0" />
+                <span>{modalError}</span>
+              </div>
+            )}
 
             <form onSubmit={handleSaveProj} className="space-y-4 font-mono text-sm">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -894,7 +1253,8 @@ export default function AdminDashboard() {
                     type="text"
                     value={projTitle}
                     onChange={(e) => setProjTitle(e.target.value)}
-                    className="w-full bg-background border border-card-border rounded p-2 focus:outline-none focus:border-primary-500 font-sans"
+                    disabled={loadingProj}
+                    className="w-full bg-background border border-card-border rounded p-2 focus:outline-none focus:border-primary-500 font-sans disabled:opacity-50 disabled:cursor-not-allowed"
                     required
                   />
                 </div>
@@ -904,7 +1264,8 @@ export default function AdminDashboard() {
                     type="number"
                     value={projOrder}
                     onChange={(e) => setProjOrder(parseInt(e.target.value) || 0)}
-                    className="w-full bg-background border border-card-border rounded p-2 focus:outline-none"
+                    disabled={loadingProj}
+                    className="w-full bg-background border border-card-border rounded p-2 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
                     required
                   />
                 </div>
@@ -917,7 +1278,8 @@ export default function AdminDashboard() {
                   value={projTags}
                   onChange={(e) => setProjTags(e.target.value)}
                   placeholder="e.g. Python, FastAPI, Docker"
-                  className="w-full bg-background border border-card-border rounded p-2 focus:outline-none"
+                  disabled={loadingProj}
+                  className="w-full bg-background border border-card-border rounded p-2 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
                   required
                 />
               </div>
@@ -929,7 +1291,8 @@ export default function AdminDashboard() {
                     type="text"
                     value={projRepo}
                     onChange={(e) => setProjRepo(e.target.value)}
-                    className="w-full bg-background border border-card-border rounded p-2 focus:outline-none"
+                    disabled={loadingProj}
+                    className="w-full bg-background border border-card-border rounded p-2 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
                   />
                 </div>
                 <div className="space-y-1">
@@ -938,7 +1301,8 @@ export default function AdminDashboard() {
                     type="text"
                     value={projLive}
                     onChange={(e) => setProjLive(e.target.value)}
-                    className="w-full bg-background border border-card-border rounded p-2 focus:outline-none"
+                    disabled={loadingProj}
+                    className="w-full bg-background border border-card-border rounded p-2 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
                   />
                 </div>
               </div>
@@ -949,7 +1313,8 @@ export default function AdminDashboard() {
                   rows={4}
                   value={projDesc}
                   onChange={(e) => setProjDesc(e.target.value)}
-                  className="w-full bg-background border border-card-border rounded p-2 focus:outline-none focus:border-primary-500 font-sans"
+                  disabled={loadingProj}
+                  className="w-full bg-background border border-card-border rounded p-2 focus:outline-none focus:border-primary-500 font-sans disabled:opacity-50 disabled:cursor-not-allowed"
                   required
                 />
               </div>
@@ -958,15 +1323,24 @@ export default function AdminDashboard() {
                 <button
                   type="button"
                   onClick={() => setProjModalOpen(false)}
-                  className="px-4 py-2 bg-background border border-card-border hover:bg-card-bg rounded font-bold transition-colors cursor-pointer"
+                  disabled={loadingProj}
+                  className="px-4 py-2 bg-background border border-card-border hover:bg-card-bg rounded font-bold transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded font-bold transition-colors cursor-pointer"
+                  disabled={loadingProj}
+                  className="inline-flex items-center space-x-2 px-4 py-2 bg-primary-500 hover:bg-primary-600 disabled:bg-card-border text-white rounded font-bold transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Save Project
+                  {loadingProj ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin shrink-0" />
+                      <span>Saving...</span>
+                    </>
+                  ) : (
+                    <span>Save Project</span>
+                  )}
                 </button>
               </div>
             </form>
@@ -982,10 +1356,21 @@ export default function AdminDashboard() {
               <h4 className="text-md font-bold font-mono">
                 {techId ? `edit_tech_record: ${techId}` : "add_tech_record"}
               </h4>
-              <button onClick={() => setTechModalOpen(false)} className="text-text-muted hover:text-foreground cursor-pointer">
+              <button 
+                onClick={() => setTechModalOpen(false)} 
+                disabled={loadingTech}
+                className="text-text-muted hover:text-foreground cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              >
                 <X className="w-5 h-5" />
               </button>
             </div>
+
+            {modalError && (
+              <div className="p-3 bg-red-500/10 border border-red-500/20 text-red-500 rounded-lg text-xs font-mono flex items-center space-x-2">
+                <ShieldAlert className="w-4 h-4 shrink-0" />
+                <span>{modalError}</span>
+              </div>
+            )}
 
             <form onSubmit={handleSaveTech} className="space-y-4 font-mono text-sm">
               <div className="space-y-1">
@@ -995,7 +1380,8 @@ export default function AdminDashboard() {
                   value={techName}
                   onChange={(e) => setTechName(e.target.value)}
                   placeholder="e.g. Kubernetes"
-                  className="w-full bg-background border border-card-border rounded p-2 focus:outline-none"
+                  disabled={loadingTech}
+                  className="w-full bg-background border border-card-border rounded p-2 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
                   required
                 />
               </div>
@@ -1006,7 +1392,8 @@ export default function AdminDashboard() {
                   <select
                     value={techCategory}
                     onChange={(e) => setTechCategory(e.target.value)}
-                    className="w-full bg-background border border-card-border rounded p-2 focus:outline-none"
+                    disabled={loadingTech}
+                    className="w-full bg-background border border-card-border rounded p-2 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <option value="Frontend">Frontend</option>
                     <option value="Backend">Backend</option>
@@ -1023,7 +1410,8 @@ export default function AdminDashboard() {
                     max={100}
                     value={techProficiency}
                     onChange={(e) => setTechProficiency(parseInt(e.target.value) || 0)}
-                    className="w-full bg-background border border-card-border rounded p-2 focus:outline-none"
+                    disabled={loadingTech}
+                    className="w-full bg-background border border-card-border rounded p-2 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
                     required
                   />
                 </div>
@@ -1037,7 +1425,8 @@ export default function AdminDashboard() {
                     value={techIcon}
                     onChange={(e) => setTechIcon(e.target.value)}
                     placeholder="e.g. docker"
-                    className="w-full bg-background border border-card-border rounded p-2 focus:outline-none"
+                    disabled={loadingTech}
+                    className="w-full bg-background border border-card-border rounded p-2 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
                   />
                 </div>
                 <div className="space-y-1">
@@ -1046,7 +1435,8 @@ export default function AdminDashboard() {
                     type="number"
                     value={techOrder}
                     onChange={(e) => setTechOrder(parseInt(e.target.value) || 0)}
-                    className="w-full bg-background border border-card-border rounded p-2 focus:outline-none"
+                    disabled={loadingTech}
+                    className="w-full bg-background border border-card-border rounded p-2 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
                     required
                   />
                 </div>
@@ -1056,18 +1446,171 @@ export default function AdminDashboard() {
                 <button
                   type="button"
                   onClick={() => setTechModalOpen(false)}
-                  className="px-4 py-2 bg-background border border-card-border hover:bg-card-bg rounded font-bold transition-colors cursor-pointer"
+                  disabled={loadingTech}
+                  className="px-4 py-2 bg-background border border-card-border hover:bg-card-bg rounded font-bold transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded font-bold transition-colors cursor-pointer"
+                  disabled={loadingTech}
+                  className="inline-flex items-center space-x-2 px-4 py-2 bg-primary-500 hover:bg-primary-600 disabled:bg-card-border text-white rounded font-bold transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Save Tech
+                  {loadingTech ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin shrink-0" />
+                      <span>Saving...</span>
+                    </>
+                  ) : (
+                    <span>Save Tech</span>
+                  )}
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* 4. USER MODAL */}
+      {userModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="w-full max-w-sm bg-card-bg border border-card-border rounded-xl shadow-2xl p-6 space-y-4 font-mono text-sm">
+            <div className="flex justify-between items-center border-b border-card-border pb-3">
+              <h4 className="text-md font-bold font-mono">
+                {editingUserId ? `edit_user_credentials: ${editingUserId}` : "register_user_credentials"}
+              </h4>
+              <button 
+                onClick={() => {
+                  setUserModalOpen(false);
+                  setEditingUserId(null);
+                }} 
+                disabled={loadingUser}
+                className="text-text-muted hover:text-foreground cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {modalError && (
+              <div className="p-3 bg-red-500/10 border border-red-500/20 text-red-500 rounded-lg text-xs font-mono flex items-center space-x-2">
+                <ShieldAlert className="w-4 h-4 shrink-0" />
+                <span>{modalError}</span>
+              </div>
+            )}
+
+            <form onSubmit={handleSaveUser} className="space-y-4">
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-text-muted">Email Address</label>
+                <input
+                  type="email"
+                  value={userEmail}
+                  onChange={(e) => setUserEmail(e.target.value)}
+                  placeholder="name@domain.com"
+                  disabled={loadingUser}
+                  className="w-full bg-background border border-card-border rounded p-2 focus:outline-none font-sans disabled:opacity-50 disabled:cursor-not-allowed"
+                  required
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-text-muted">Password</label>
+                <input
+                  type="password"
+                  value={userPassword}
+                  onChange={(e) => setUserPassword(e.target.value)}
+                  placeholder={editingUserId ? "Leave blank to keep unchanged" : "At least 6 characters"}
+                  disabled={loadingUser}
+                  className="w-full bg-background border border-card-border rounded p-2 focus:outline-none font-sans disabled:opacity-50 disabled:cursor-not-allowed"
+                  minLength={6}
+                  required={!editingUserId}
+                />
+              </div>
+
+              <div className="flex items-center space-x-2.5 py-1">
+                <input
+                  type="checkbox"
+                  id="user-is-admin"
+                  checked={userIsAdmin}
+                  onChange={(e) => setUserIsAdmin(e.target.checked)}
+                  disabled={loadingUser || (editingUserId !== null && users.find(usr => usr.id === editingUserId)?.email === adminEmail)}
+                  className="w-4 h-4 bg-background border border-card-border rounded accent-primary-500 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                />
+                <label htmlFor="user-is-admin" className="text-xs font-bold select-none cursor-pointer flex items-center disabled:opacity-50 disabled:cursor-not-allowed">
+                  <Shield className="w-3.5 h-3.5 mr-1 text-amber-500" />
+                  Grant Administrative Privileges
+                </label>
+              </div>
+
+              <div className="flex justify-end space-x-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setUserModalOpen(false);
+                    setEditingUserId(null);
+                  }}
+                  disabled={loadingUser}
+                  className="px-4 py-2 bg-background border border-card-border hover:bg-card-bg rounded font-bold transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={loadingUser}
+                  className="inline-flex items-center space-x-2 px-4 py-2 bg-primary-500 hover:bg-primary-600 disabled:bg-card-border text-white rounded font-bold transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {loadingUser ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin shrink-0" />
+                      <span>{editingUserId ? "Saving..." : "Creating..."}</span>
+                    </>
+                  ) : (
+                    <span>{editingUserId ? "Save Changes" : "Create User"}</span>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* 5. CONFIRMATION MODAL */}
+      {confirmModalOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="w-full max-w-sm bg-card-bg border border-card-border rounded-xl shadow-2xl p-6 space-y-4 font-mono text-sm">
+            <div className={`flex items-center space-x-3 border-b border-card-border pb-3 ${
+              confirmModalType === "danger" 
+                ? "text-red-500" 
+                : confirmModalType === "warning" 
+                  ? "text-amber-500" 
+                  : "text-blue-500"
+            }`}>
+              <ShieldAlert className="w-5 h-5" />
+              <h4 className="text-md font-bold uppercase">{confirmModalTitle}</h4>
+            </div>
+            <p className="text-foreground/80 leading-relaxed font-sans">{confirmModalMessage}</p>
+            <div className="flex justify-end space-x-2 pt-2">
+              <button
+                onClick={() => setConfirmModalOpen(false)}
+                className="px-4 py-2 bg-background border border-card-border hover:bg-card-bg rounded font-bold transition-colors cursor-pointer text-xs"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={async () => {
+                  setConfirmModalOpen(false);
+                  await confirmModalAction();
+                }}
+                className={`px-4 py-2 text-white rounded font-bold transition-colors cursor-pointer text-xs ${
+                  confirmModalType === "danger"
+                    ? "bg-red-600 hover:bg-red-700"
+                    : confirmModalType === "warning"
+                      ? "bg-amber-500 hover:bg-amber-600"
+                      : "bg-primary-500 hover:bg-primary-600"
+                }`}
+              >
+                Confirm
+              </button>
+            </div>
           </div>
         </div>
       )}
