@@ -11,6 +11,17 @@ import {
 import * as api from "@/lib/api";
 import ThemeToggle from "@/components/ThemeToggle";
 
+/** Only allow http/https URLs — prevents javascript: XSS stored via CMS */
+function safeUrl(url: string | null | undefined): string | null {
+  if (!url) return null;
+  try {
+    const { protocol } = new URL(url);
+    return ["http:", "https:"].includes(protocol) ? url : null;
+  } catch {
+    return null;
+  }
+}
+
 export default function AdminDashboard() {
   const router = useRouter();
 
@@ -1008,24 +1019,36 @@ export default function AdminDashboard() {
                             </td>
                             <td className="px-4 py-3">
                               <div className="flex items-center justify-center gap-2">
-                                {proj.repo_link ? (
-                                  <a href={proj.repo_link} target="_blank" rel="noreferrer" title={proj.repo_link}
-                                    className="p-1.5 rounded-lg border border-card-border hover:border-primary-500 hover:text-primary-500 hover:bg-primary-500/10 transition-all"
-                                  >
-                                    <GitBranch className="w-3.5 h-3.5" />
-                                  </a>
-                                ) : (
-                                  <span className="p-1.5 opacity-20"><GitBranch className="w-3.5 h-3.5" /></span>
-                                )}
-                                {proj.live_link ? (
-                                  <a href={proj.live_link} target="_blank" rel="noreferrer" title={proj.live_link}
-                                    className="p-1.5 rounded-lg border border-card-border hover:border-green-500 hover:text-green-400 hover:bg-green-500/10 transition-all"
-                                  >
-                                    <ExternalLink className="w-3.5 h-3.5" />
-                                  </a>
-                                ) : (
-                                  <span className="p-1.5 opacity-20"><ExternalLink className="w-3.5 h-3.5" /></span>
-                                )}
+                                {(() => {
+                                  const repoSafe = safeUrl(proj.repo_link);
+                                  const liveSafe = safeUrl(proj.live_link);
+                                  return (
+                                    <>
+                                      {repoSafe ? (
+                                        <a href={repoSafe} target="_blank" rel="noopener noreferrer" title={repoSafe}
+                                          className="p-1.5 rounded-lg border border-card-border hover:border-primary-500 hover:text-primary-500 hover:bg-primary-500/10 transition-all"
+                                        >
+                                          <GitBranch className="w-3.5 h-3.5" />
+                                        </a>
+                                      ) : (
+                                        <span className="p-1.5 opacity-20" title={proj.repo_link ? "Invalid URL" : "No repo link"}>
+                                          <GitBranch className="w-3.5 h-3.5" />
+                                        </span>
+                                      )}
+                                      {liveSafe ? (
+                                        <a href={liveSafe} target="_blank" rel="noopener noreferrer" title={liveSafe}
+                                          className="p-1.5 rounded-lg border border-card-border hover:border-green-500 hover:text-green-400 hover:bg-green-500/10 transition-all"
+                                        >
+                                          <ExternalLink className="w-3.5 h-3.5" />
+                                        </a>
+                                      ) : (
+                                        <span className="p-1.5 opacity-20" title={proj.live_link ? "Invalid URL" : "No live link"}>
+                                          <ExternalLink className="w-3.5 h-3.5" />
+                                        </span>
+                                      )}
+                                    </>
+                                  );
+                                })()}
                               </div>
                             </td>
                             <td className="px-4 py-3 text-center">

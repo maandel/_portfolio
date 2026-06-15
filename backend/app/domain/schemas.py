@@ -1,6 +1,6 @@
 from typing import List, Optional
 
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, field_validator
 
 
 class UserCreate(BaseModel):
@@ -82,6 +82,22 @@ class BioBase(BaseModel):
     email: EmailStr
     avatar_url: Optional[str] = None
 
+    @field_validator("resume_url", "github_url", "linkedin_url", "twitter_url", "avatar_url", mode="before")
+    @classmethod
+    def validate_url_scheme(cls, v: Optional[str]) -> Optional[str]:
+        if v is None or v == "":
+            return None
+        try:
+            from urllib.parse import urlparse
+            scheme = urlparse(v).scheme.lower()
+            if scheme not in ("http", "https"):
+                raise ValueError(f"URL must use http or https scheme, got '{scheme}'")
+        except ValueError:
+            raise
+        except Exception:
+            raise ValueError("Invalid URL format")
+        return v
+
 
 class BioCreate(BioBase):
     pass
@@ -97,6 +113,22 @@ class BioUpdate(BaseModel):
     twitter_url: Optional[str] = None
     email: Optional[EmailStr] = None
     avatar_url: Optional[str] = None
+
+    @field_validator("resume_url", "github_url", "linkedin_url", "twitter_url", "avatar_url", mode="before")
+    @classmethod
+    def validate_url_scheme(cls, v: Optional[str]) -> Optional[str]:
+        if v is None or v == "":
+            return None
+        try:
+            from urllib.parse import urlparse
+            scheme = urlparse(v).scheme.lower()
+            if scheme not in ("http", "https"):
+                raise ValueError(f"URL must use http or https scheme, got '{scheme}'")
+        except ValueError:
+            raise
+        except Exception:
+            raise ValueError("Invalid URL format")
+        return v
 
 
 class BioResponse(BioBase):
@@ -143,6 +175,22 @@ class ProjectBase(BaseModel):
     live_link: Optional[str] = None
     order_index: int = 0
 
+    @field_validator("repo_link", "live_link", mode="before")
+    @classmethod
+    def validate_link_scheme(cls, v: Optional[str]) -> Optional[str]:
+        if v is None or v == "":
+            return None
+        try:
+            from urllib.parse import urlparse
+            scheme = urlparse(v).scheme.lower()
+            if scheme not in ("http", "https"):
+                raise ValueError(f"URL must use http or https scheme, got '{scheme}'")
+        except ValueError:
+            raise
+        except Exception:
+            raise ValueError("Invalid URL format")
+        return v
+
 
 class ProjectCreate(ProjectBase):
     pass
@@ -155,6 +203,22 @@ class ProjectUpdate(BaseModel):
     repo_link: Optional[str] = None
     live_link: Optional[str] = None
     order_index: Optional[int] = None
+
+    @field_validator("repo_link", "live_link", mode="before")
+    @classmethod
+    def validate_link_scheme(cls, v: Optional[str]) -> Optional[str]:
+        if v is None or v == "":
+            return None
+        try:
+            from urllib.parse import urlparse
+            scheme = urlparse(v).scheme.lower()
+            if scheme not in ("http", "https"):
+                raise ValueError(f"URL must use http or https scheme, got '{scheme}'")
+        except ValueError:
+            raise
+        except Exception:
+            raise ValueError("Invalid URL format")
+        return v
 
 
 class ProjectResponse(ProjectBase):
