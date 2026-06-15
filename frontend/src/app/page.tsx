@@ -269,13 +269,13 @@ export default function Home() {
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="md:hidden fixed inset-x-0 top-16 z-40 bg-background border-b border-card-border p-6 font-mono text-center flex flex-col space-y-4"
+            className="md:hidden fixed inset-x-0 top-16 z-40 bg-background/95 backdrop-blur-lg border-b border-card-border p-6 font-mono text-center flex flex-col space-y-1 shadow-2xl"
           >
-            <a href="#about" onClick={() => setMobileMenuOpen(false)} className="py-2 hover:text-primary-500 transition-colors">./about</a>
-            <a href="#experience" onClick={() => setMobileMenuOpen(false)} className="py-2 hover:text-primary-500 transition-colors">./experience</a>
-            <a href="#skills" onClick={() => setMobileMenuOpen(false)} className="py-2 hover:text-primary-500 transition-colors">./skills</a>
-            <a href="#projects" onClick={() => setMobileMenuOpen(false)} className="py-2 hover:text-primary-500 transition-colors">./projects</a>
-            <a href="#contact" onClick={() => setMobileMenuOpen(false)} className="py-2 hover:text-primary-500 transition-colors">./contact</a>
+            <a href="#about" onClick={() => setMobileMenuOpen(false)} className="py-3 rounded-lg hover:bg-card-bg hover:text-primary-500 transition-all font-semibold">./about</a>
+            <a href="#experience" onClick={() => setMobileMenuOpen(false)} className="py-3 rounded-lg hover:bg-card-bg hover:text-primary-500 transition-all font-semibold">./experience</a>
+            <a href="#skills" onClick={() => setMobileMenuOpen(false)} className="py-3 rounded-lg hover:bg-card-bg hover:text-primary-500 transition-all font-semibold">./skills</a>
+            <a href="#projects" onClick={() => setMobileMenuOpen(false)} className="py-3 rounded-lg hover:bg-card-bg hover:text-primary-500 transition-all font-semibold">./projects</a>
+            <a href="#contact" onClick={() => setMobileMenuOpen(false)} className="py-3 rounded-lg hover:bg-card-bg hover:text-primary-500 transition-all font-semibold">./contact</a>
           </motion.div>
         )}
       </AnimatePresence>

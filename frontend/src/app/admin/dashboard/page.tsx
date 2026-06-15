@@ -1609,22 +1609,28 @@ export default function AdminDashboard() {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <label className="text-xs font-bold text-text-muted">Category</label>
-                  <select
-                    value={techCategory}
-                    onChange={(e) => setTechCategory(e.target.value)}
-                    disabled={loadingTech}
-                    className="w-full bg-background border border-card-border rounded p-2 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    <option value="Frontend">Frontend</option>
-                    <option value="Backend">Backend</option>
-                    <option value="Database">Database</option>
-                    <option value="DevOps">DevOps</option>
-                    <option value="Tools">Tools</option>
-                  </select>
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-text-muted">Category</label>
+                <div className="flex flex-wrap gap-2">
+                  {["Frontend", "Backend", "Database", "DevOps", "Tools"].map((cat) => (
+                    <button
+                      key={cat}
+                      type="button"
+                      disabled={loadingTech}
+                      onClick={() => setTechCategory(cat)}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all cursor-pointer ${
+                        techCategory === cat
+                          ? "bg-primary-500/10 border-primary-500 text-primary-500 shadow-[0_0_8px_rgba(59,130,246,0.15)]"
+                          : "bg-background border-card-border text-text-muted hover:border-primary-500/50 hover:text-foreground"
+                      }`}
+                    >
+                      {cat}
+                    </button>
+                  ))}
                 </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-4">
                 <div className="space-y-1">
                   <label className="text-xs font-bold text-text-muted">Proficiency (%)</label>
                   <input
@@ -1638,20 +1644,6 @@ export default function AdminDashboard() {
                     required
                   />
                 </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <label className="text-xs font-bold text-text-muted">Icon Reference Name</label>
-                  <input
-                    type="text"
-                    value={techIcon}
-                    onChange={(e) => setTechIcon(e.target.value)}
-                    placeholder="e.g. docker"
-                    disabled={loadingTech}
-                    className="w-full bg-background border border-card-border rounded p-2 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
-                  />
-                </div>
                 <div className="space-y-1">
                   <label className="text-xs font-bold text-text-muted">Sort Order</label>
                   <input
@@ -1661,6 +1653,17 @@ export default function AdminDashboard() {
                     disabled={loadingTech}
                     className="w-full bg-background border border-card-border rounded p-2 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
                     required
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-text-muted">Icon Reference Name</label>
+                  <input
+                    type="text"
+                    value={techIcon}
+                    onChange={(e) => setTechIcon(e.target.value)}
+                    placeholder="e.g. docker"
+                    disabled={loadingTech}
+                    className="w-full bg-background border border-card-border rounded p-2 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
                   />
                 </div>
               </div>
