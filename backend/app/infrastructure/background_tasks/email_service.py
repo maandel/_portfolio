@@ -29,8 +29,9 @@ def _send_brevo_message(
         "api-key": settings.BREVO_API_KEY,
         "content-type": "application/json",
     }
+    sender_email = settings.BREVO_SENDER_EMAIL or settings.SMTP_FROM_EMAIL
     payload = {
-        "sender": {"name": sender_name, "email": settings.SMTP_FROM_EMAIL},
+        "sender": {"name": sender_name, "email": sender_email},
         "to": [{"email": to_email}],
         "subject": subject,
         "htmlContent": html_body,
@@ -95,17 +96,31 @@ def send_otp_email_sync(email: str, otp: str) -> str:
     <p>Mandell Admin System</p>
     """
 
-    try:
-        if settings.BREVO_API_KEY:
+    brevo_error = None
+    if settings.BREVO_API_KEY:
+        try:
+            from_email = settings.BREVO_SENDER_EMAIL or settings.SMTP_FROM_EMAIL
+            if not from_email or "your_email" in from_email:
+                raise ValueError(
+                    f"Brevo configuration error: BREVO_SENDER_EMAIL or SMTP_FROM_EMAIL ('{from_email}') is empty or a placeholder"
+                )
             _send_brevo_message("Mandell Admin", email, subject, body)
             return f"Successfully sent OTP email to {email} via Brevo HTTP API"
+        except Exception as e:
+            brevo_error = e
+            logger.warning(
+                f"Brevo HTTP API delivery failed for OTP reset, attempting SMTP fallback: {str(e)}"
+            )
 
-        # Fallback to SMTP
+    # SMTP Path (fallback or primary if Brevo key is not set)
+    try:
         if (
             not settings.SMTP_USER
             or "your_email" in settings.SMTP_USER
             or not settings.SMTP_PASSWORD
         ):
+            if brevo_error:
+                raise brevo_error
             raise ValueError("SMTP credentials and Brevo API Key not configured")
 
         msg = MIMEMultipart()
@@ -118,7 +133,10 @@ def send_otp_email_sync(email: str, otp: str) -> str:
 
         return f"Successfully sent OTP email to {email} via SMTP"
     except Exception as e:
-        logger.error(f"Email delivery failed to send OTP reset email to {email}: {str(e)}")
+        error_msg = f"Email delivery failed. Brevo error: {brevo_error}. SMTP error: {str(e)}"
+        logger.error(
+            f"Email delivery failed to send OTP reset email to {email}: {error_msg}"
+        )
         if settings.EMAIL_FALLBACK_TO_FILE:
             wrote_fallback = False
             try:
@@ -150,19 +168,37 @@ def send_contact_email_sync(name: str, email: str, message: str) -> str:
     </div>
     """
 
-    try:
-        recipient = settings.SMTP_TO_EMAIL or settings.SMTP_FROM_EMAIL
+    brevo_error = None
+    recipient = settings.BREVO_CONTACT_TO_EMAIL or settings.SMTP_TO_EMAIL or settings.SMTP_FROM_EMAIL
 
-        if settings.BREVO_API_KEY:
+    if settings.BREVO_API_KEY:
+        try:
+            from_email = settings.BREVO_SENDER_EMAIL or settings.SMTP_FROM_EMAIL
+            if not from_email or "your_email" in from_email:
+                raise ValueError(
+                    f"Brevo configuration error: BREVO_SENDER_EMAIL or SMTP_FROM_EMAIL ('{from_email}') is empty or a placeholder"
+                )
+            if not recipient or "your_email" in recipient:
+                raise ValueError(
+                    f"Brevo configuration error: Recipient ('{recipient}') is empty or a placeholder"
+                )
             _send_brevo_message(name, recipient, subject, body, reply_to_email=email)
             return f"Successfully sent contact email from {name} ({email}) via Brevo HTTP API"
+        except Exception as e:
+            brevo_error = e
+            logger.warning(
+                f"Brevo HTTP API delivery failed for contact message, attempting SMTP fallback: {str(e)}"
+            )
 
-        # Fallback to SMTP
+    # SMTP Path (fallback or primary if Brevo key is not set)
+    try:
         if (
             not settings.SMTP_USER
             or "your_email" in settings.SMTP_USER
             or not settings.SMTP_PASSWORD
         ):
+            if brevo_error:
+                raise brevo_error
             raise ValueError("SMTP credentials and Brevo API Key not configured")
 
         msg = MIMEMultipart()
@@ -176,8 +212,9 @@ def send_contact_email_sync(name: str, email: str, message: str) -> str:
 
         return f"Successfully sent contact email from {name} ({email}) via SMTP"
     except Exception as e:
+        error_msg = f"Email delivery failed. Brevo error: {brevo_error}. SMTP error: {str(e)}"
         logger.error(
-            f"Email delivery failed to send contact email from {name} ({email}): {str(e)}"
+            f"Email delivery failed to send contact email from {name} ({email}): {error_msg}"
         )
         if settings.EMAIL_FALLBACK_TO_FILE:
             wrote_fallback = False
