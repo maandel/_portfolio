@@ -83,7 +83,7 @@ async def seed_database():
                 "Deeply specialized in Python, asyncio, relational databases, "
                 "caching, and task queues.",
                 email=admin_email,
-                resume_url="#",
+                resume_url=None,
                 github_url="https://github.com",
                 linkedin_url="https://linkedin.com",
                 twitter_url="https://twitter.com",

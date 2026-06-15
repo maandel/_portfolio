@@ -82,16 +82,27 @@ class BioBase(BaseModel):
     email: EmailStr
     avatar_url: Optional[str] = None
 
-    @field_validator("resume_url", "github_url", "linkedin_url", "twitter_url", "avatar_url", mode="before")
+    @field_validator(
+        "resume_url",
+        "github_url",
+        "linkedin_url",
+        "twitter_url",
+        "avatar_url",
+        mode="before",
+    )
     @classmethod
     def validate_url_scheme(cls, v: Optional[str]) -> Optional[str]:
-        if v is None or v == "":
+        if v is None or v == "" or v == "#":
             return None
         try:
             from urllib.parse import urlparse
-            scheme = urlparse(v).scheme.lower()
-            if scheme not in ("http", "https"):
-                raise ValueError(f"URL must use http or https scheme, got '{scheme}'")
+
+            parsed = urlparse(v)
+            scheme = parsed.scheme.lower()
+            if scheme not in ("http", "https") or not parsed.netloc:
+                raise ValueError(
+                    "URL must be a valid absolute HTTP or HTTPS URL with a domain"
+                )
         except ValueError:
             raise
         except Exception:
@@ -114,16 +125,27 @@ class BioUpdate(BaseModel):
     email: Optional[EmailStr] = None
     avatar_url: Optional[str] = None
 
-    @field_validator("resume_url", "github_url", "linkedin_url", "twitter_url", "avatar_url", mode="before")
+    @field_validator(
+        "resume_url",
+        "github_url",
+        "linkedin_url",
+        "twitter_url",
+        "avatar_url",
+        mode="before",
+    )
     @classmethod
     def validate_url_scheme(cls, v: Optional[str]) -> Optional[str]:
-        if v is None or v == "":
+        if v is None or v == "" or v == "#":
             return None
         try:
             from urllib.parse import urlparse
-            scheme = urlparse(v).scheme.lower()
-            if scheme not in ("http", "https"):
-                raise ValueError(f"URL must use http or https scheme, got '{scheme}'")
+
+            parsed = urlparse(v)
+            scheme = parsed.scheme.lower()
+            if scheme not in ("http", "https") or not parsed.netloc:
+                raise ValueError(
+                    "URL must be a valid absolute HTTP or HTTPS URL with a domain"
+                )
         except ValueError:
             raise
         except Exception:
@@ -178,13 +200,17 @@ class ProjectBase(BaseModel):
     @field_validator("repo_link", "live_link", mode="before")
     @classmethod
     def validate_link_scheme(cls, v: Optional[str]) -> Optional[str]:
-        if v is None or v == "":
+        if v is None or v == "" or v == "#":
             return None
         try:
             from urllib.parse import urlparse
-            scheme = urlparse(v).scheme.lower()
-            if scheme not in ("http", "https"):
-                raise ValueError(f"URL must use http or https scheme, got '{scheme}'")
+
+            parsed = urlparse(v)
+            scheme = parsed.scheme.lower()
+            if scheme not in ("http", "https") or not parsed.netloc:
+                raise ValueError(
+                    "URL must be a valid absolute HTTP or HTTPS URL with a domain"
+                )
         except ValueError:
             raise
         except Exception:
@@ -207,13 +233,17 @@ class ProjectUpdate(BaseModel):
     @field_validator("repo_link", "live_link", mode="before")
     @classmethod
     def validate_link_scheme(cls, v: Optional[str]) -> Optional[str]:
-        if v is None or v == "":
+        if v is None or v == "" or v == "#":
             return None
         try:
             from urllib.parse import urlparse
-            scheme = urlparse(v).scheme.lower()
-            if scheme not in ("http", "https"):
-                raise ValueError(f"URL must use http or https scheme, got '{scheme}'")
+
+            parsed = urlparse(v)
+            scheme = parsed.scheme.lower()
+            if scheme not in ("http", "https") or not parsed.netloc:
+                raise ValueError(
+                    "URL must be a valid absolute HTTP or HTTPS URL with a domain"
+                )
         except ValueError:
             raise
         except Exception:
