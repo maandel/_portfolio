@@ -27,6 +27,7 @@ class Settings(BaseSettings):
     SMTP_USER: str = "your_email@gmail.com"
     SMTP_PASSWORD: str = "your_app_password"
     SMTP_FROM_EMAIL: str = "your_email@gmail.com"
+    SMTP_TO_EMAIL: str | None = None
 
     ADMIN_EMAIL: str = "admin@mandell.tech"
     ADMIN_PASSWORD: str | None = None
