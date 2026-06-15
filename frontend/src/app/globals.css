@@ -22,6 +22,8 @@
   --color-text-muted: var(--text-muted);
   --color-terminal-bg: var(--terminal-bg);
   --color-terminal-text: var(--terminal-text);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
 }
 
 :root {
