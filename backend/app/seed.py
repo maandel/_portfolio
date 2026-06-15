@@ -46,7 +46,8 @@ async def seed_database():
                     "ADMIN PASSWORD NOT SPECIFIED. GENERATING SECURE RANDOM PASSWORD."
                 )
                 logger.warning(
-                    "The generated credentials have been written to 'secrets_seed.txt' in the project root."
+                    "The generated credentials have been written to "
+                    "'secrets_seed.txt' in the project root."
                 )
                 logger.warning(
                     "Please copy these credentials. They will not be displayed again."
