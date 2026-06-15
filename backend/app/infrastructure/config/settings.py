@@ -34,6 +34,9 @@ class Settings(BaseSettings):
     SMTP_USE_STARTTLS: bool = True
     SMTP_TIMEOUT_SECONDS: int = 10
     EMAIL_FALLBACK_TO_FILE: bool = False
+    BREVO_API_KEY: str | None = None
+    BREVO_SENDER_EMAIL: str | None = None
+    BREVO_CONTACT_TO_EMAIL: str | None = None
 
     ADMIN_EMAIL: str = "admin@mandell.tech"
     ADMIN_PASSWORD: str | None = None
@@ -52,7 +55,31 @@ class Settings(BaseSettings):
         return self.SMTP_PORT == 465
 
     @model_validator(mode="after")
-    def configure_redis_and_celery(self) -> "Settings":
+    def configure_services(self) -> "Settings":
+        # 1. Clean up placeholder BREVO_API_KEY if present
+        if self.BREVO_API_KEY:
+            key_stripped = self.BREVO_API_KEY.strip()
+            if not key_stripped or "xxxxxx" in key_stripped:
+                self.BREVO_API_KEY = None
+            else:
+                self.BREVO_API_KEY = key_stripped
+
+        # 2. Validate Brevo config if a real key is present
+        if self.BREVO_API_KEY:
+            sender = self.BREVO_SENDER_EMAIL or self.SMTP_FROM_EMAIL
+            if not sender or "your_email" in sender:
+                raise ValueError(
+                    "Brevo is enabled (BREVO_API_KEY is set), but sender email is not configured. "
+                    "Please set BREVO_SENDER_EMAIL or SMTP_FROM_EMAIL to a valid email address."
+                )
+
+            recipient = self.BREVO_CONTACT_TO_EMAIL or self.SMTP_TO_EMAIL or self.SMTP_FROM_EMAIL
+            if not recipient or "your_email" in recipient:
+                raise ValueError(
+                    "Brevo is enabled (BREVO_API_KEY is set), but contact recipient email is not configured. "
+                    "Please set BREVO_CONTACT_TO_EMAIL, SMTP_TO_EMAIL, or SMTP_FROM_EMAIL to a valid email address."
+                )
+
         redis_url = self.REDIS_URL.strip() if self.REDIS_URL else ""
 
         # If CELERY_BROKER_URL is default/empty and REDIS_URL is set, derive it

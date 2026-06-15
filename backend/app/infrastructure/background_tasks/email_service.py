@@ -2,13 +2,53 @@ import logging
 import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+from typing import Optional
 
+import httpx
 from fastapi import BackgroundTasks
 
 from app.domain.interfaces import IEmailService
 from app.infrastructure.config.settings import settings
 
 logger = logging.getLogger(__name__)
+
+
+def _send_brevo_message(
+    sender_name: str,
+    to_email: str,
+    subject: str,
+    html_body: str,
+    reply_to_email: Optional[str] = None,
+) -> None:
+    if not settings.BREVO_API_KEY:
+        raise ValueError("Brevo API key is not configured")
+
+    url = "https://api.brevo.com/v3/smtp/email"
+    headers = {
+        "accept": "application/json",
+        "api-key": settings.BREVO_API_KEY,
+        "content-type": "application/json",
+    }
+    sender_email = settings.BREVO_SENDER_EMAIL or settings.SMTP_FROM_EMAIL
+    payload = {
+        "sender": {"name": sender_name, "email": sender_email},
+        "to": [{"email": to_email}],
+        "subject": subject,
+        "htmlContent": html_body,
+    }
+    if reply_to_email:
+        payload["replyTo"] = {"email": reply_to_email, "name": sender_name}
+
+    response = httpx.post(
+        url,
+        json=payload,
+        headers=headers,
+        timeout=settings.SMTP_TIMEOUT_SECONDS,
+    )
+    if response.status_code >= 400:
+        raise Exception(
+            f"Brevo API error {response.status_code}: {response.text}"
+        )
 
 
 def _send_smtp_message(msg: MIMEMultipart) -> None:
@@ -56,13 +96,32 @@ def send_otp_email_sync(email: str, otp: str) -> str:
     <p>Mandell Admin System</p>
     """
 
+    brevo_error = None
+    if settings.BREVO_API_KEY:
+        try:
+            from_email = settings.BREVO_SENDER_EMAIL or settings.SMTP_FROM_EMAIL
+            if not from_email or "your_email" in from_email:
+                raise ValueError(
+                    f"Brevo configuration error: BREVO_SENDER_EMAIL or SMTP_FROM_EMAIL ('{from_email}') is empty or a placeholder"
+                )
+            _send_brevo_message("Mandell Admin", email, subject, body)
+            return f"Successfully sent OTP email to {email} via Brevo HTTP API"
+        except Exception as e:
+            brevo_error = e
+            logger.warning(
+                f"Brevo HTTP API delivery failed for OTP reset, attempting SMTP fallback: {str(e)}"
+            )
+
+    # SMTP Path (fallback or primary if Brevo key is not set)
     try:
         if (
             not settings.SMTP_USER
             or "your_email" in settings.SMTP_USER
             or not settings.SMTP_PASSWORD
         ):
-            raise ValueError("SMTP credentials not configured")
+            if brevo_error:
+                raise brevo_error
+            raise ValueError("SMTP credentials and Brevo API Key not configured")
 
         msg = MIMEMultipart()
         msg["From"] = settings.SMTP_FROM_EMAIL
@@ -74,7 +133,10 @@ def send_otp_email_sync(email: str, otp: str) -> str:
 
         return f"Successfully sent OTP email to {email} via SMTP"
     except Exception as e:
-        logger.error(f"SMTP failed to send OTP reset email to {email}: {str(e)}")
+        error_msg = f"Email delivery failed. Brevo error: {brevo_error}. SMTP error: {str(e)}"
+        logger.error(
+            f"Email delivery failed to send OTP reset email to {email}: {error_msg}"
+        )
         if settings.EMAIL_FALLBACK_TO_FILE:
             wrote_fallback = False
             try:
@@ -88,7 +150,7 @@ def send_otp_email_sync(email: str, otp: str) -> str:
                     f"Failed to write OTP fallback to file for {email}: {str(io_err)}"
                 )
             if wrote_fallback:
-                return f"Logged OTP email to {email} (SMTP fallback completed)"
+                return f"Logged OTP email to {email} (fallback completed)"
             return f"Failed to send OTP email to {email} (fallback write failed)"
         return f"Failed to send OTP email to {email} (no fallback)"
 
@@ -106,15 +168,38 @@ def send_contact_email_sync(name: str, email: str, message: str) -> str:
     </div>
     """
 
+    brevo_error = None
+    recipient = settings.BREVO_CONTACT_TO_EMAIL or settings.SMTP_TO_EMAIL or settings.SMTP_FROM_EMAIL
+
+    if settings.BREVO_API_KEY:
+        try:
+            from_email = settings.BREVO_SENDER_EMAIL or settings.SMTP_FROM_EMAIL
+            if not from_email or "your_email" in from_email:
+                raise ValueError(
+                    f"Brevo configuration error: BREVO_SENDER_EMAIL or SMTP_FROM_EMAIL ('{from_email}') is empty or a placeholder"
+                )
+            if not recipient or "your_email" in recipient:
+                raise ValueError(
+                    f"Brevo configuration error: Recipient ('{recipient}') is empty or a placeholder"
+                )
+            _send_brevo_message(name, recipient, subject, body, reply_to_email=email)
+            return f"Successfully sent contact email from {name} ({email}) via Brevo HTTP API"
+        except Exception as e:
+            brevo_error = e
+            logger.warning(
+                f"Brevo HTTP API delivery failed for contact message, attempting SMTP fallback: {str(e)}"
+            )
+
+    # SMTP Path (fallback or primary if Brevo key is not set)
     try:
         if (
             not settings.SMTP_USER
             or "your_email" in settings.SMTP_USER
             or not settings.SMTP_PASSWORD
         ):
-            raise ValueError("SMTP credentials not configured")
-
-        recipient = settings.SMTP_TO_EMAIL or settings.SMTP_FROM_EMAIL
+            if brevo_error:
+                raise brevo_error
+            raise ValueError("SMTP credentials and Brevo API Key not configured")
 
         msg = MIMEMultipart()
         msg["From"] = settings.SMTP_FROM_EMAIL
@@ -125,10 +210,11 @@ def send_contact_email_sync(name: str, email: str, message: str) -> str:
 
         _send_smtp_message(msg)
 
-        return f"Successfully sent contact email from {name} ({email}) via SMTP"  # noqa: E501
+        return f"Successfully sent contact email from {name} ({email}) via SMTP"
     except Exception as e:
+        error_msg = f"Email delivery failed. Brevo error: {brevo_error}. SMTP error: {str(e)}"
         logger.error(
-            f"SMTP failed to send contact email from {name} ({email}): {str(e)}"
+            f"Email delivery failed to send contact email from {name} ({email}): {error_msg}"
         )
         if settings.EMAIL_FALLBACK_TO_FILE:
             wrote_fallback = False
@@ -144,7 +230,7 @@ def send_contact_email_sync(name: str, email: str, message: str) -> str:
                     f"for {name} ({email}): {str(io_err)}"
                 )
             if wrote_fallback:
-                return f"Logged contact email from {name} ({email}) (SMTP fallback)"
+                return f"Logged contact email from {name} ({email}) (fallback completed)"
             return (
                 f"Failed to send contact email from {name} ({email}) "
                 "(fallback write failed)"
