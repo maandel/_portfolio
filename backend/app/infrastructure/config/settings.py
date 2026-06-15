@@ -34,6 +34,7 @@ class Settings(BaseSettings):
     SMTP_USE_STARTTLS: bool = True
     SMTP_TIMEOUT_SECONDS: int = 10
     EMAIL_FALLBACK_TO_FILE: bool = False
+    BREVO_API_KEY: str | None = None
 
     ADMIN_EMAIL: str = "admin@mandell.tech"
     ADMIN_PASSWORD: str | None = None
