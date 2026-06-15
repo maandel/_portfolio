@@ -64,13 +64,71 @@ const DEFAULT_PROJECTS = [
   }
 ];
 
-const DEFAULT_TECHS = [
-  { name: "Python", category: "Backend", proficiency: 95 },
-  { name: "FastAPI", category: "Backend", proficiency: 90 },
-  { name: "PostgreSQL", category: "Database", proficiency: 85 },
-  { name: "Redis", category: "Database", proficiency: 80 },
-  { name: "Docker", category: "DevOps", proficiency: 85 },
-  { name: "React / Next.js", category: "Frontend", proficiency: 70 }
+// Stable icon name slug mappings for Simple Icons CDN
+const SIMPLE_ICON_SLUGS: Record<string, string> = {
+  nextjs: "nextdotjs",
+  "react/next.js": "nextdotjs",
+};
+
+function getSimpleSlug(iconName: string): string {
+  return SIMPLE_ICON_SLUGS[iconName.toLowerCase()] ?? iconName.toLowerCase();
+}
+
+type Tech = {
+  id?: number;
+  name: string;
+  category: string;
+  proficiency?: number;
+  icon_name?: string;
+};
+
+// Stable top-level component — defined outside Home so React never remounts it
+function TechIcon({ iconName, name, category }: { iconName?: string; name: string; category: string }) {
+  type Stage = "devicon-orig" | "devicon-plain" | "simple" | "fallback";
+  const [stage, setStage] = useState<Stage>(iconName ? "devicon-orig" : "fallback");
+
+  const FallbackIcon = () => (
+    <span className="text-text-muted group-hover:text-cyber-green transition-colors">
+      {category === "Backend" && <Code className="w-6 h-6" />}
+      {category === "Database" && <Database className="w-6 h-6" />}
+      {category === "DevOps" && <Settings className="w-6 h-6" />}
+      {!["Backend", "Database", "DevOps"].includes(category) && <Layers className="w-6 h-6" />}
+    </span>
+  );
+
+  if (stage === "fallback" || !iconName) return <FallbackIcon />;
+
+  const simpleSlug = getSimpleSlug(iconName);
+  const srcs: Record<Stage, string> = {
+    "devicon-orig": `https://cdn.jsdelivr.net/gh/devicons/devicon/icons/${iconName}/${iconName}-original.svg`,
+    "devicon-plain": `https://cdn.jsdelivr.net/gh/devicons/devicon/icons/${iconName}/${iconName}-plain.svg`,
+    "simple": `https://cdn.simpleicons.org/${simpleSlug}/10b981`,
+    "fallback": "",
+  };
+  const nextStage: Record<Stage, Stage> = {
+    "devicon-orig": "devicon-plain",
+    "devicon-plain": "simple",
+    "simple": "fallback",
+    "fallback": "fallback",
+  };
+
+  return (
+    <img
+      src={srcs[stage]}
+      alt={name}
+      className="w-8 h-8 object-contain"
+      onError={() => setStage(nextStage[stage])}
+    />
+  );
+}
+
+const DEFAULT_TECHS: Tech[] = [
+  { name: "Python", category: "Backend", proficiency: 95, icon_name: "python" },
+  { name: "FastAPI", category: "Backend", proficiency: 90, icon_name: "fastapi" },
+  { name: "PostgreSQL", category: "Database", proficiency: 85, icon_name: "postgresql" },
+  { name: "Redis", category: "Database", proficiency: 80, icon_name: "redis" },
+  { name: "Docker", category: "DevOps", proficiency: 85, icon_name: "docker" },
+  { name: "React / Next.js", category: "Frontend", proficiency: 70, icon_name: "nextjs" },
 ];
 
 export default function Home() {
@@ -80,7 +138,7 @@ export default function Home() {
   const [bio, setBio] = useState(DEFAULT_BIO);
   const [experiences, setExperiences] = useState(DEFAULT_EXPERIENCES);
   const [projects, setProjects] = useState(DEFAULT_PROJECTS);
-  const [techs, setTechs] = useState(DEFAULT_TECHS);
+  const [techs, setTechs] = useState<Tech[]>(DEFAULT_TECHS);
   const [isLoading, setIsLoading] = useState(true);
 
   const [contactName, setContactName] = useState("");
@@ -441,55 +499,9 @@ export default function Home() {
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-            {techs.map((tech, idx) => {
-              // Simple Icons uses slightly different slugs for some names
-              const simpleIconSlug = (tech.icon_name || "")
-                .replace("tailwindcss", "tailwindcss")
-                .replace("nextjs", "nextdotjs")
-                .replace("postgresql", "postgresql")
-                .toLowerCase();
-
-              const TechIcon = () => {
-                const [stage, setStage] = useState<"devicon-orig" | "devicon-plain" | "simple" | "fallback">(
-                  tech.icon_name ? "devicon-orig" : "fallback"
-                );
-
-                if (stage === "fallback" || !tech.icon_name) {
-                  return (
-                    <span className="text-text-muted group-hover:text-cyber-green transition-colors">
-                      {tech.category === "Backend" && <Code className="w-6 h-6" />}
-                      {tech.category === "Database" && <Database className="w-6 h-6" />}
-                      {tech.category === "DevOps" && <Settings className="w-6 h-6" />}
-                      {!["Backend", "Database", "DevOps"].includes(tech.category) && <Layers className="w-6 h-6" />}
-                    </span>
-                  );
-                }
-
-                const srcs: Record<string, string> = {
-                  "devicon-orig": `https://cdn.jsdelivr.net/gh/devicons/devicon/icons/${tech.icon_name}/${tech.icon_name}-original.svg`,
-                  "devicon-plain": `https://cdn.jsdelivr.net/gh/devicons/devicon/icons/${tech.icon_name}/${tech.icon_name}-plain.svg`,
-                  "simple": `https://cdn.simpleicons.org/${simpleIconSlug}/10b981`,
-                };
-
-                const nextStage: Record<string, "devicon-orig" | "devicon-plain" | "simple" | "fallback"> = {
-                  "devicon-orig": "devicon-plain",
-                  "devicon-plain": "simple",
-                  "simple": "fallback",
-                };
-
-                return (
-                  <img
-                    src={srcs[stage]}
-                    alt={tech.name}
-                    className="w-8 h-8 object-contain"
-                    onError={() => setStage(nextStage[stage])}
-                  />
-                );
-              };
-
-              return (
+            {techs.map((tech) => (
               <motion.div
-                key={idx}
+                key={tech.id ?? tech.name}
                 whileHover={{ y: -5, borderColor: "rgba(16, 185, 129, 0.4)" }}
                 className="bg-card-bg border border-card-border p-4 rounded-xl flex flex-col justify-between h-36 transition-all relative overflow-hidden group cursor-default"
               >
@@ -499,7 +511,7 @@ export default function Home() {
                 {/* Icon row */}
                 <div className="flex items-start justify-between">
                   <div className="w-9 h-9 flex items-center justify-center">
-                    <TechIcon />
+                    <TechIcon iconName={tech.icon_name} name={tech.name} category={tech.category} />
                   </div>
                   <span className="text-[10px] font-mono uppercase bg-card-border/50 px-1.5 py-0.5 rounded text-text-muted leading-tight">
                     {tech.category}
@@ -525,8 +537,7 @@ export default function Home() {
                   )}
                 </div>
               </motion.div>
-              );
-            })}
+            ))}
           </div>
         </section>
 
