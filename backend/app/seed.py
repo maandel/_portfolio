@@ -20,18 +20,31 @@ logger = logging.getLogger(__name__)
 async def seed_database():
     async with async_session_maker() as session:
         try:
-            admin_email = settings.ADMIN_EMAIL
-            result = await session.execute(
-                select(UserDb).where(UserDb.email == admin_email)
-            )
-            existing_admin = result.scalars().first()
+            users_exist = (
+                await session.execute(select(UserDb))
+            ).scalars().first() is not None
+            bios_exist = (
+                await session.execute(select(BioDb))
+            ).scalars().first() is not None
+            exps_exist = (
+                await session.execute(select(ExperienceDb))
+            ).scalars().first() is not None
+            projs_exist = (
+                await session.execute(select(ProjectDb))
+            ).scalars().first() is not None
+            techs_exist = (
+                await session.execute(select(TechnologyDb))
+            ).scalars().first() is not None
 
-            if existing_admin:
-                logger.info("Database is already seeded.")
+            if users_exist or bios_exist or exps_exist or projs_exist or techs_exist:
+                logger.info(
+                    "Database is not empty (contains existing data). Skipping seeding."
+                )
                 return
 
-            logger.info("Seeding database with default data...")
+            logger.info("Database is empty. Seeding default data...")
 
+            admin_email = settings.ADMIN_EMAIL
             admin_password = settings.ADMIN_PASSWORD
             if not admin_password:
                 admin_password = secrets.token_urlsafe(16)
