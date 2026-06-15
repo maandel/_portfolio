@@ -613,38 +613,40 @@ export default function AdminDashboard() {
     <div className="min-h-screen bg-background text-foreground flex flex-col font-sans">
 
       {/* Top CMS Header */}
-      <header className="bg-card-bg border-b border-card-border px-6 py-4 flex items-center justify-between shadow-sm">
-        <div className="flex items-center space-x-3">
-          <div className="flex items-center space-x-2 font-mono text-primary-500 font-bold">
-            <Terminal className="w-5 h-5" />
-            <span>mandell.tech/admin/dashboard</span>
+      <header className="bg-card-bg border-b border-card-border px-4 py-3 sm:px-6 sm:py-4 flex items-center justify-between shadow-sm">
+        {/* Left Side */}
+        <div className="flex items-center space-x-2 min-w-0">
+          <div className="flex items-center space-x-2 font-mono text-primary-500 font-bold text-sm sm:text-base min-w-0">
+            <Terminal className="w-4 h-4 sm:w-5 sm:h-5 shrink-0" />
+            <span className="truncate max-w-[120px] xs:max-w-[160px] sm:max-w-none">mandell.tech/admin/dashboard</span>
           </div>
-          <span className="text-xs font-mono bg-card-border/50 text-text-muted px-2.5 py-0.5 rounded">CMS Utility</span>
+          <span className="hidden xs:inline-block text-[10px] font-mono bg-card-border/50 text-text-muted px-2 py-0.5 rounded shrink-0">CMS Utility</span>
         </div>
 
-        <div className="flex items-center space-x-4">
-          <Link href="/" className="inline-flex items-center space-x-1.5 text-xs text-text-muted hover:text-foreground font-mono transition-colors">
+        {/* Right Side */}
+        <div className="flex items-center space-x-2 sm:space-x-4 shrink-0">
+          <Link href="/" className="inline-flex items-center space-x-1 text-xs text-text-muted hover:text-foreground font-mono transition-colors">
             <ArrowLeft className="w-3.5 h-3.5" />
-            <span>Back to Site</span>
+            <span className="hidden sm:inline">Back to Site</span>
           </Link>
           <ThemeToggle />
-          <div className="h-6 w-[1px] bg-card-border" />
-          <div className="flex items-center space-x-2 text-xs font-mono">
-            <span className="text-text-muted select-none">User:</span>
-            <span className="font-bold">{adminEmail}</span>
+          <div className="h-4 w-[1px] bg-card-border" />
+          <div className="flex items-center space-x-1 text-xs font-mono max-w-[100px] sm:max-w-none min-w-0">
+            <span className="hidden md:inline text-text-muted select-none">User:</span>
+            <span className="font-bold truncate max-w-[80px] sm:max-w-[150px]">{adminEmail}</span>
           </div>
           <button
             onClick={handleLogout}
-            className="inline-flex items-center space-x-1 px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded text-xs font-mono font-bold cursor-pointer transition-colors"
+            className="inline-flex items-center space-x-1 px-2 py-1.5 sm:px-3 sm:py-1.5 bg-red-600 hover:bg-red-700 text-white rounded text-xs font-mono font-bold cursor-pointer transition-colors"
           >
             <LogOut className="w-3.5 h-3.5" />
-            <span>Logout</span>
+            <span className="hidden sm:inline">Logout</span>
           </button>
         </div>
       </header>
 
       {/* Main CMS Split Panel */}
-      <div className="flex-1 flex flex-col md:flex-row max-w-7xl w-full mx-auto p-6 gap-6">
+      <div className="flex-1 flex flex-col md:flex-row max-w-7xl w-full mx-auto p-4 sm:p-6 gap-4 sm:gap-6">
 
         {/* Sidebar Nav (Util layout) */}
         <aside className="w-full md:w-64 flex flex-col gap-2 shrink-0">
