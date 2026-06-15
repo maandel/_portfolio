@@ -94,14 +94,15 @@ class BioBase(BaseModel):
     def validate_url_scheme(cls, v: Optional[str]) -> Optional[str]:
         if v is None or v == "" or v == "#":
             return None
+        v = v.strip()
         try:
             from urllib.parse import urlparse
 
             parsed = urlparse(v)
             scheme = parsed.scheme.lower()
-            if scheme not in ("http", "https") or not parsed.netloc:
+            if scheme not in ("http", "https") or not parsed.hostname:
                 raise ValueError(
-                    "URL must be a valid absolute HTTP or HTTPS URL with a domain"
+                    "URL must be a valid absolute HTTP or HTTPS URL with a hostname"
                 )
         except ValueError:
             raise
@@ -137,14 +138,15 @@ class BioUpdate(BaseModel):
     def validate_url_scheme(cls, v: Optional[str]) -> Optional[str]:
         if v is None or v == "" or v == "#":
             return None
+        v = v.strip()
         try:
             from urllib.parse import urlparse
 
             parsed = urlparse(v)
             scheme = parsed.scheme.lower()
-            if scheme not in ("http", "https") or not parsed.netloc:
+            if scheme not in ("http", "https") or not parsed.hostname:
                 raise ValueError(
-                    "URL must be a valid absolute HTTP or HTTPS URL with a domain"
+                    "URL must be a valid absolute HTTP or HTTPS URL with a hostname"
                 )
         except ValueError:
             raise
@@ -202,14 +204,15 @@ class ProjectBase(BaseModel):
     def validate_link_scheme(cls, v: Optional[str]) -> Optional[str]:
         if v is None or v == "" or v == "#":
             return None
+        v = v.strip()
         try:
             from urllib.parse import urlparse
 
             parsed = urlparse(v)
             scheme = parsed.scheme.lower()
-            if scheme not in ("http", "https") or not parsed.netloc:
+            if scheme not in ("http", "https") or not parsed.hostname:
                 raise ValueError(
-                    "URL must be a valid absolute HTTP or HTTPS URL with a domain"
+                    "URL must be a valid absolute HTTP or HTTPS URL with a hostname"
                 )
         except ValueError:
             raise
@@ -235,14 +238,15 @@ class ProjectUpdate(BaseModel):
     def validate_link_scheme(cls, v: Optional[str]) -> Optional[str]:
         if v is None or v == "" or v == "#":
             return None
+        v = v.strip()
         try:
             from urllib.parse import urlparse
 
             parsed = urlparse(v)
             scheme = parsed.scheme.lower()
-            if scheme not in ("http", "https") or not parsed.netloc:
+            if scheme not in ("http", "https") or not parsed.hostname:
                 raise ValueError(
-                    "URL must be a valid absolute HTTP or HTTPS URL with a domain"
+                    "URL must be a valid absolute HTTP or HTTPS URL with a hostname"
                 )
         except ValueError:
             raise
