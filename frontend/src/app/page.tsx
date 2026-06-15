@@ -35,7 +35,7 @@ const DEFAULT_BIO = {
   title: "Senior Backend Engineer & Systems Architect",
   about_me: "Dedicated to crafting robust API designs, high-throughput systems, and clean architectural patterns. Deeply specialized in Python, asyncio, relational databases, caching, and task queues.",
   email: "admin@mandell.tech",
-  resume_url: "#",
+  resume_url: null,
   github_url: "https://github.com",
   linkedin_url: "https://linkedin.com",
   twitter_url: "https://twitter.com",
@@ -310,13 +310,15 @@ export default function Home() {
                 <Mail className="w-4 h-4" />
                 <span>Contact Form</span>
               </a>
-              <a
-                href={bio.resume_url}
-                className="inline-flex items-center space-x-2 px-5 py-2.5 bg-card-bg border border-card-border hover:border-primary-500 transition-colors rounded-lg cursor-pointer"
-              >
-                <FileText className="w-4 h-4" />
-                <span>View Resume</span>
-              </a>
+              {bio.resume_url && (
+                <a
+                  href={bio.resume_url}
+                  className="inline-flex items-center space-x-2 px-5 py-2.5 bg-card-bg border border-card-border hover:border-primary-500 transition-colors rounded-lg cursor-pointer"
+                >
+                  <FileText className="w-4 h-4" />
+                  <span>View Resume</span>
+                </a>
+              )}
             </div>
 
             <div className="flex items-center space-x-4 pt-2">
