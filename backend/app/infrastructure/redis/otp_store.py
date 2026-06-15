@@ -7,9 +7,17 @@ from app.infrastructure.config.settings import settings
 
 logger = logging.getLogger(__name__)
 
-redis_client = aioredis.Redis(
-    host=settings.REDIS_HOST, port=settings.REDIS_PORT, db=0, decode_responses=True
-)
+if settings.REDIS_URL:
+    redis_client = aioredis.Redis.from_url(
+        settings.REDIS_URL, decode_responses=True
+    )
+else:
+    redis_client = aioredis.Redis(
+        host=settings.REDIS_HOST,
+        port=settings.REDIS_PORT,
+        db=0,
+        decode_responses=True,
+    )
 
 
 class RedisOTPStore(IOTPStore):
