@@ -12,13 +12,22 @@ logger = logging.getLogger(__name__)
 
 
 def _send_smtp_message(msg: MIMEMultipart) -> None:
-    if settings.SMTP_PORT == 465:
-        with smtplib.SMTP_SSL(settings.SMTP_HOST, settings.SMTP_PORT) as server:
+    if settings.use_ssl:
+        with smtplib.SMTP_SSL(
+            settings.SMTP_HOST,
+            settings.SMTP_PORT,
+            timeout=settings.SMTP_TIMEOUT_SECONDS,
+        ) as server:
             server.login(settings.SMTP_USER, settings.SMTP_PASSWORD)
             server.send_message(msg)
     else:
-        with smtplib.SMTP(settings.SMTP_HOST, settings.SMTP_PORT) as server:
-            server.starttls()
+        with smtplib.SMTP(
+            settings.SMTP_HOST,
+            settings.SMTP_PORT,
+            timeout=settings.SMTP_TIMEOUT_SECONDS,
+        ) as server:
+            if settings.SMTP_USE_STARTTLS:
+                server.starttls()
             server.login(settings.SMTP_USER, settings.SMTP_PASSWORD)
             server.send_message(msg)
 
@@ -60,20 +69,22 @@ def send_otp_email_sync(email: str, otp: str) -> str:
         return f"Successfully sent OTP email to {email} via SMTP"
     except Exception as e:
         logger.error(f"SMTP failed to send OTP reset email to {email}: {str(e)}")
-        try:
-            with open("local_email_fallback.log", "a", encoding="utf-8") as f:
-                f.write(f"--- OTP RESET [{email}] ---\n")
-                f.write(f"OTP: {otp}\n")
-                f.write("-" * 40 + "\n")
-        except Exception:
-            pass
-        return f"Logged OTP email to {email} (SMTP fallback completed)"
+        if settings.EMAIL_FALLBACK_TO_FILE:
+            try:
+                with open("local_email_fallback.log", "a", encoding="utf-8") as f:
+                    f.write(f"--- OTP RESET [{email}] ---\n")
+                    f.write(f"OTP: {otp}\n")
+                    f.write("-" * 40 + "\n")
+            except Exception:
+                pass
+            return f"Logged OTP email to {email} (SMTP fallback completed)"
+        return f"Failed to send OTP email to {email} (no fallback)"
 
 
 def send_contact_email_sync(name: str, email: str, message: str) -> str:
-    subject = f"Portfolio Contact Form: Message from {name}"
+    subject = f"Mandell Contact Form: Message from {name}"
     body = f"""
-    <h2>New Portfolio Contact Form Message</h2>
+    <h2>New Mandell Contact Form Message</h2>
     <p><strong>Name:</strong> {name}</p>
     <p><strong>Email:</strong> {email}</p>
     <p><strong>Message:</strong></p>
@@ -107,14 +118,16 @@ def send_contact_email_sync(name: str, email: str, message: str) -> str:
         logger.error(
             f"SMTP failed to send contact email from {name} ({email}): {str(e)}"
         )
-        try:
-            with open("local_email_fallback.log", "a", encoding="utf-8") as f:
-                f.write(f"--- CONTACT FORM [{name} ({email})] ---\n")
-                f.write(f"MESSAGE: {message}\n")
-                f.write("-" * 40 + "\n")
-        except Exception:
-            pass
-        return f"Logged contact email from {name} ({email}) (SMTP fallback)"
+        if settings.EMAIL_FALLBACK_TO_FILE:
+            try:
+                with open("local_email_fallback.log", "a", encoding="utf-8") as f:
+                    f.write(f"--- CONTACT FORM [{name} ({email})] ---\n")
+                    f.write(f"MESSAGE: {message}\n")
+                    f.write("-" * 40 + "\n")
+            except Exception:
+                pass
+            return f"Logged contact email from {name} ({email}) (SMTP fallback)"
+        return f"Failed to send contact email from {name} ({email})"
 
 
 class BackgroundTasksEmailService(IEmailService):
