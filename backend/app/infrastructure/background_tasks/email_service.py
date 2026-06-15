@@ -11,8 +11,20 @@ from app.infrastructure.config.settings import settings
 logger = logging.getLogger(__name__)
 
 
+def _send_smtp_message(msg: MIMEMultipart) -> None:
+    if settings.SMTP_PORT == 465:
+        with smtplib.SMTP_SSL(settings.SMTP_HOST, settings.SMTP_PORT) as server:
+            server.login(settings.SMTP_USER, settings.SMTP_PASSWORD)
+            server.send_message(msg)
+    else:
+        with smtplib.SMTP(settings.SMTP_HOST, settings.SMTP_PORT) as server:
+            server.starttls()
+            server.login(settings.SMTP_USER, settings.SMTP_PASSWORD)
+            server.send_message(msg)
+
+
 def send_otp_email_sync(email: str, otp: str) -> str:
-    subject = "Portfolio Admin - Password Reset OTP"
+    subject = "Mandell Admin - Password Reset OTP"
     body = f"""
     <h2>Password Reset Request</h2>
     <p>You have requested to reset your password. </p>
@@ -26,7 +38,7 @@ def send_otp_email_sync(email: str, otp: str) -> str:
     <p>If you did not initiate this request, please ignore this email.</p>
     <br>
     <p>Best regards,</p>
-    <p>Portfolio Admin System</p>
+    <p>Mandell Admin System</p>
     """
 
     try:
@@ -43,15 +55,11 @@ def send_otp_email_sync(email: str, otp: str) -> str:
         msg["Subject"] = subject
         msg.attach(MIMEText(body, "html"))
 
-        with smtplib.SMTP(settings.SMTP_HOST, settings.SMTP_PORT) as server:
-            server.starttls()
-            server.login(settings.SMTP_USER, settings.SMTP_PASSWORD)
-            server.send_message(msg)
+        _send_smtp_message(msg)
 
         return f"Successfully sent OTP email to {email} via SMTP"
     except Exception as e:
         logger.error(f"SMTP failed to send OTP reset email to {email}: {str(e)}")
-        # Write to local file for dev convenience (ignored by Git)
         try:
             with open("local_email_fallback.log", "a", encoding="utf-8") as f:
                 f.write(f"--- OTP RESET [{email}] ---\n")
@@ -83,16 +91,16 @@ def send_contact_email_sync(name: str, email: str, message: str) -> str:
         ):
             raise ValueError("SMTP credentials not configured")
 
+        recipient = settings.SMTP_TO_EMAIL or settings.SMTP_FROM_EMAIL
+
         msg = MIMEMultipart()
         msg["From"] = settings.SMTP_FROM_EMAIL
-        msg["To"] = settings.SMTP_FROM_EMAIL
+        msg["To"] = recipient
+        msg["Reply-To"] = email
         msg["Subject"] = subject
         msg.attach(MIMEText(body, "html"))
 
-        with smtplib.SMTP(settings.SMTP_HOST, settings.SMTP_PORT) as server:
-            server.starttls()
-            server.login(settings.SMTP_USER, settings.SMTP_PASSWORD)
-            server.send_message(msg)
+        _send_smtp_message(msg)
 
         return f"Successfully sent contact email from {name} ({email}) via SMTP"  # noqa: E501
     except Exception as e:
