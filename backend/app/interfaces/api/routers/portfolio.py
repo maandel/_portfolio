@@ -94,6 +94,7 @@ async def update_existing_experience(
             start_date=exp_data.start_date,
             description=exp_data.description,
             end_date=exp_data.end_date,
+            end_date_set="end_date" in exp_data.model_fields_set,
             order_index=exp_data.order_index,
         )
     except ValueError as e:
@@ -161,7 +162,9 @@ async def update_existing_project(
             description=proj_data.description,
             tech_tags=proj_data.tech_tags,
             repo_link=proj_data.repo_link,
+            repo_link_set="repo_link" in proj_data.model_fields_set,
             live_link=proj_data.live_link,
+            live_link_set="live_link" in proj_data.model_fields_set,
             order_index=proj_data.order_index,
         )
     except ValueError as e:
@@ -227,7 +230,9 @@ async def update_existing_technology(
             name=tech_data.name,
             category=tech_data.category,
             proficiency=tech_data.proficiency,
+            proficiency_set="proficiency" in tech_data.model_fields_set,
             icon_name=tech_data.icon_name,
+            icon_name_set="icon_name" in tech_data.model_fields_set,
             order_index=tech_data.order_index,
         )
     except ValueError as e:
