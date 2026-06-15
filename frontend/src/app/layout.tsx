@@ -13,8 +13,8 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Developer Mandell | Senior Systems Architect & Backend Engineer",
-  description: "Premium engineering-focused developer portfolio showcasing clean architecture and backend systems integrations.",
+  title: "Okiki Nelson | Software Engineer",
+  description: "Okiki Nelson is a backend-focused Software Engineer dedicated to building scalable, clean, and efficient web architecturees."
 };
 
 export default function RootLayout({
