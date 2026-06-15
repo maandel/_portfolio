@@ -4,6 +4,7 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
 from fastapi import BackgroundTasks
+
 from app.domain.interfaces import IEmailService
 from app.infrastructure.config.settings import settings
 
@@ -49,12 +50,15 @@ def send_otp_email_sync(email: str, otp: str) -> str:
 
         return f"Successfully sent OTP email to {email} via SMTP"
     except Exception as e:
-        print("\n" + "=" * 50)
-        print(f"SMTP EXCEPTION: {str(e)}")
-        print("FALLBACK EMAIL LOG [OTP RESET]:")
-        print(f"TO: {email}")
-        print(f"OTP: {otp}")
-        print("=" * 50 + "\n")
+        logger.error(f"SMTP failed to send OTP reset email to {email}: {str(e)}")
+        # Write to local file for dev convenience (ignored by Git)
+        try:
+            with open("local_email_fallback.log", "a", encoding="utf-8") as f:
+                f.write(f"--- OTP RESET [{email}] ---\n")
+                f.write(f"OTP: {otp}\n")
+                f.write("-" * 40 + "\n")
+        except Exception:
+            pass
         return f"Logged OTP email to {email} (SMTP fallback completed)"
 
 
@@ -92,12 +96,16 @@ def send_contact_email_sync(name: str, email: str, message: str) -> str:
 
         return f"Successfully sent contact email from {name} ({email}) via SMTP"  # noqa: E501
     except Exception as e:
-        print("\n" + "=" * 50)
-        print(f"SMTP EXCEPTION: {str(e)}")
-        print("FALLBACK EMAIL LOG [CONTACT FORM]:")
-        print(f"FROM: {name} ({email})")
-        print(f"MESSAGE: {message}")
-        print("=" * 50 + "\n")
+        logger.error(
+            f"SMTP failed to send contact email from {name} ({email}): {str(e)}"
+        )
+        try:
+            with open("local_email_fallback.log", "a", encoding="utf-8") as f:
+                f.write(f"--- CONTACT FORM [{name} ({email})] ---\n")
+                f.write(f"MESSAGE: {message}\n")
+                f.write("-" * 40 + "\n")
+        except Exception:
+            pass
         return f"Logged contact email from {name} ({email}) (SMTP fallback)"
 
 

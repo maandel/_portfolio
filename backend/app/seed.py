@@ -35,14 +35,21 @@ async def seed_database():
             admin_password = settings.ADMIN_PASSWORD
             if not admin_password:
                 admin_password = secrets.token_urlsafe(16)
+                try:
+                    with open("secrets_seed.txt", "w", encoding="utf-8") as f:
+                        f.write(f"EMAIL: {admin_email}\n")
+                        f.write(f"PASSWORD: {admin_password}\n")
+                except Exception:
+                    pass
                 logger.warning("=" * 60)
                 logger.warning(
-                    "ADMIN PASSWORD NOT SPECIFIED. GENERATING SECURE RANDOM PASSWORD:"  # noqa: E501
+                    "ADMIN PASSWORD NOT SPECIFIED. GENERATING SECURE RANDOM PASSWORD."
                 )
-                logger.warning(f"  EMAIL:    {admin_email}")
-                logger.warning(f"  PASSWORD: {admin_password}")
                 logger.warning(
-                    "Please copy these credentials. They will not be displayed again."  # noqa: E501
+                    "The generated credentials have been written to 'secrets_seed.txt' in the project root."
+                )
+                logger.warning(
+                    "Please copy these credentials. They will not be displayed again."
                 )
                 logger.warning("=" * 60)
 
