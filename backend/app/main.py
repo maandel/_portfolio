@@ -43,6 +43,19 @@ app.include_router(portfolio_router, prefix="/api/v1")
 app.include_router(contact_router, prefix="/api/v1")
 app.include_router(users_router, prefix="/api/v1")
 
+from fastapi import Request
+
+@app.middleware("http")
+async def add_security_headers(request: Request, call_next):
+    response = await call_next(request)
+    response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+    response.headers["X-Frame-Options"] = "SAMEORIGIN"
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    response.headers["Permissions-Policy"] = "geolocation=(), microphone=(), camera=()"
+    response.headers["Content-Security-Policy"] = "default-src 'self'"
+    return response
+
 
 @app.get("/")
 async def root():
