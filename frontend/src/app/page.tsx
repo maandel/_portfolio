@@ -84,8 +84,7 @@ type Tech = {
 
 // Stable top-level component — defined outside Home so React never remounts it
 function TechIcon({ iconName, name, category }: { iconName?: string; name: string; category: string }) {
-  type Stage = "devicon-orig" | "devicon-plain" | "simple" | "fallback";
-  const [stage, setStage] = useState<Stage>(iconName ? "devicon-orig" : "fallback");
+  const [error, setError] = useState(false);
 
   const FallbackIcon = () => (
     <span className="text-text-muted group-hover:text-cyber-green transition-colors">
@@ -96,28 +95,18 @@ function TechIcon({ iconName, name, category }: { iconName?: string; name: strin
     </span>
   );
 
-  if (stage === "fallback" || !iconName) return <FallbackIcon />;
+  if (error || !iconName) return <FallbackIcon />;
 
   const simpleSlug = getSimpleSlug(iconName);
-  const srcs: Record<Stage, string> = {
-    "devicon-orig": `https://cdn.jsdelivr.net/gh/devicons/devicon/icons/${iconName}/${iconName}-original.svg`,
-    "devicon-plain": `https://cdn.jsdelivr.net/gh/devicons/devicon/icons/${iconName}/${iconName}-plain.svg`,
-    "simple": `https://cdn.simpleicons.org/${simpleSlug}/10b981`,
-    "fallback": "",
-  };
-  const nextStage: Record<Stage, Stage> = {
-    "devicon-orig": "devicon-plain",
-    "devicon-plain": "simple",
-    "simple": "fallback",
-    "fallback": "fallback",
-  };
+  const src = `https://cdn.simpleicons.org/${simpleSlug}/10b981`;
 
   return (
     <img
-      src={srcs[stage]}
+      src={src}
       alt={name}
+      loading="lazy"
       className="w-8 h-8 object-contain"
-      onError={() => setStage(nextStage[stage])}
+      onError={() => setError(true)}
     />
   );
 }
@@ -255,6 +244,7 @@ export default function Home() {
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               className="p-2 rounded-lg border border-card-border hover:bg-card-bg cursor-pointer"
+              aria-label="Toggle mobile menu"
             >
               {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
@@ -322,14 +312,14 @@ export default function Home() {
             </div>
 
             <div className="flex items-center space-x-4 pt-2">
-              <a href={bio.github_url} target="_blank" rel="noreferrer" className="text-text-muted hover:text-primary-500 transition-colors">
+              <a href={bio.github_url} target="_blank" rel="noreferrer" aria-label="GitHub Profile" className="text-text-muted hover:text-primary-500 transition-colors">
                 <GithubIcon className="w-6 h-6" />
               </a>
-              <a href={bio.linkedin_url} target="_blank" rel="noreferrer" className="text-text-muted hover:text-primary-500 transition-colors">
+              <a href={bio.linkedin_url} target="_blank" rel="noreferrer" aria-label="LinkedIn Profile" className="text-text-muted hover:text-primary-500 transition-colors">
                 <LinkedinIcon className="w-6 h-6" />
               </a>
               {bio.twitter_url && (
-                <a href={bio.twitter_url} target="_blank" rel="noreferrer" className="text-text-muted hover:text-primary-500 transition-colors">
+                <a href={bio.twitter_url} target="_blank" rel="noreferrer" aria-label="Twitter Profile" className="text-text-muted hover:text-primary-500 transition-colors">
                   <TwitterIcon className="w-6 h-6" />
                 </a>
               )}
@@ -564,12 +554,12 @@ export default function Home() {
                     </div>
                     <div className="flex items-center space-x-3 text-text-muted">
                       {proj.repo_link && (
-                        <a href={proj.repo_link} target="_blank" rel="noreferrer" className="hover:text-cyber-purple transition-colors">
+                        <a href={proj.repo_link} target="_blank" rel="noreferrer" aria-label="GitHub Repository" className="hover:text-cyber-purple transition-colors">
                           <GithubIcon className="w-5 h-5" />
                         </a>
                       )}
                       {proj.live_link && (
-                        <a href={proj.live_link} target="_blank" rel="noreferrer" className="hover:text-cyber-purple transition-colors">
+                        <a href={proj.live_link} target="_blank" rel="noreferrer" aria-label="Live Project" className="hover:text-cyber-purple transition-colors">
                           <ExternalLink className="w-5 h-5" />
                         </a>
                       )}
