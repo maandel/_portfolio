@@ -13,8 +13,21 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Okiki Nelson | Software Engineer",
-  description: "Okiki Nelson is a backend-focused Software Engineer dedicated to building scalable, clean, and efficient web architecturees."
+  metadataBase: new URL("https://mandell.tech"),
+  title: "Mandell Tech | Developer Mandell | Backend Engineer",
+  description: "Developer Mandell is a backend-focused Software Engineer dedicated to crafting robust API designs, high-throughput systems, and clean architectural patterns. Welcome to Mandell Tech.",
+  keywords: ["Mandell Tech", "mandell.tech", "Developer Mandell", "Backend Engineer", "Software Engineer", "Systems Architect", "Python", "FastAPI"],
+  openGraph: {
+    title: "Mandell Tech | Developer Mandell",
+    description: "Welcome to Mandell Tech. Explore the portfolio, projects, and architecture insights of Developer Mandell.",
+    url: "https://mandell.tech",
+    siteName: "Mandell Tech",
+    locale: "en_US",
+    type: "website",
+  },
+  alternates: {
+    canonical: "https://mandell.tech",
+  }
 };
 
 export default function RootLayout({
