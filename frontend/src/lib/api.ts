@@ -1,25 +1,25 @@
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 export async function getProfile() {
-  const res = await fetch(`${API_URL}/api/v1/profile`);
+  const res = await fetch(`${API_URL}/api/v1/profile`, { cache: "no-store" });
   if (!res.ok) throw new Error("Failed to fetch profile");
   return res.json();
 }
 
 export async function getExperiences() {
-  const res = await fetch(`${API_URL}/api/v1/experiences`);
+  const res = await fetch(`${API_URL}/api/v1/experiences`, { cache: "no-store" });
   if (!res.ok) throw new Error("Failed to fetch experiences");
   return res.json();
 }
 
 export async function getProjects() {
-  const res = await fetch(`${API_URL}/api/v1/projects`);
+  const res = await fetch(`${API_URL}/api/v1/projects`, { cache: "no-store" });
   if (!res.ok) throw new Error("Failed to fetch projects");
   return res.json();
 }
 
 export async function getTechnologies() {
-  const res = await fetch(`${API_URL}/api/v1/technologies`);
+  const res = await fetch(`${API_URL}/api/v1/technologies`, { cache: "no-store" });
   if (!res.ok) throw new Error("Failed to fetch technologies");
   return res.json();
 }
