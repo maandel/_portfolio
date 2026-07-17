@@ -7,6 +7,7 @@ import {
   Menu, X, ExternalLink, ArrowRight, CheckCircle, FileText, Settings, Database
 } from "lucide-react";
 import ThemeToggle from "@/components/ThemeToggle";
+import Background3D from "@/components/Background3D";
 import * as api from "@/lib/api";
 
 const GithubIcon = (props: React.SVGProps<SVGSVGElement>) => (
@@ -30,40 +31,6 @@ const TwitterIcon = (props: React.SVGProps<SVGSVGElement>) => (
   </svg>
 );
 
-const DEFAULT_BIO = {
-  name: "Developer Mandell",
-  title: "Senior Backend Engineer & Systems Architect",
-  about_me: "Dedicated to crafting robust API designs, high-throughput systems, and clean architectural patterns. Deeply specialized in Python, asyncio, relational databases, caching, and task queues.",
-  email: "admin@mandell.tech",
-  resume_url: null,
-  github_url: "https://github.com",
-  linkedin_url: "https://linkedin.com",
-  twitter_url: "https://twitter.com",
-  avatar_url: "https://images.unsplash.com/photo-1618401471353-b98aedd07871?q=80&w=300&h=300&fit=crop"
-};
-
-const DEFAULT_EXPERIENCES = [
-  {
-    id: 1,
-    company: "Kodehauz",
-    role: "Software Engineering Intern",
-    start_date: "Jan 2026",
-    end_date: "Present",
-    description: "Engineered backend application APIs using FastAPI, PostgreSQL, and Celery worker routines. Standardized domain entities and implemented dependency inversion to transition legacy systems to strict Clean Architecture. Enhanced system security with secure JWT flows and managed multi-container scaling via Docker Compose."
-  }
-];
-
-const DEFAULT_PROJECTS = [
-  {
-    id: 1,
-    title: "be-wordwiz",
-    description: "An advanced dictionary parsing and word game analytics backend. Features scalable REST APIs, dynamic indexing, dictionary caching via Redis, and high-performance asynchronous background parsing jobs executed by Celery workers.",
-    tech_tags: ["Python", "FastAPI", "PostgreSQL", "Redis", "Celery", "Docker"],
-    repo_link: "https://github.com/mandell-tech/be-wordwiz",
-    live_link: "https://wordwiz.mandell.tech"
-  }
-];
-
 // Stable icon name slug mappings for Simple Icons CDN
 const SIMPLE_ICON_SLUGS: Record<string, string> = {
   nextjs: "nextdotjs",
@@ -82,11 +49,11 @@ type Tech = {
   icon_name?: string;
 };
 
-// Stable top-level component — defined outside Home so React never remounts it
+// Stable top-level component
 function TechIcon({ iconName, name, category }: { iconName?: string; name: string; category: string }) {
   const [error, setError] = useState(false);
 
-  const FallbackIcon = () => (
+  const fallbackIcon = (
     <span className="text-text-muted group-hover:text-cyber-green transition-colors">
       {category === "Backend" && <Code className="w-6 h-6" />}
       {category === "Database" && <Database className="w-6 h-6" />}
@@ -95,7 +62,7 @@ function TechIcon({ iconName, name, category }: { iconName?: string; name: strin
     </span>
   );
 
-  if (error || !iconName) return <FallbackIcon />;
+  if (error || !iconName) return fallbackIcon;
 
   const simpleSlug = getSimpleSlug(iconName);
   const src = `https://cdn.simpleicons.org/${simpleSlug}/10b981`;
@@ -111,23 +78,14 @@ function TechIcon({ iconName, name, category }: { iconName?: string; name: strin
   );
 }
 
-const DEFAULT_TECHS: Tech[] = [
-  { name: "Python", category: "Backend", proficiency: 95, icon_name: "python" },
-  { name: "FastAPI", category: "Backend", proficiency: 90, icon_name: "fastapi" },
-  { name: "PostgreSQL", category: "Database", proficiency: 85, icon_name: "postgresql" },
-  { name: "Redis", category: "Database", proficiency: 80, icon_name: "redis" },
-  { name: "Docker", category: "DevOps", proficiency: 85, icon_name: "docker" },
-  { name: "React / Next.js", category: "Frontend", proficiency: 70, icon_name: "nextjs" },
-];
-
 export default function Home() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<"profile" | "architecture" | "logs">("profile");
 
-  const [bio, setBio] = useState(DEFAULT_BIO);
-  const [experiences, setExperiences] = useState(DEFAULT_EXPERIENCES);
-  const [projects, setProjects] = useState(DEFAULT_PROJECTS);
-  const [techs, setTechs] = useState<Tech[]>(DEFAULT_TECHS);
+  const [bio, setBio] = useState<any>(null);
+  const [experiences, setExperiences] = useState<any[]>([]);
+  const [projects, setProjects] = useState<any[]>([]);
+  const [techs, setTechs] = useState<Tech[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   const [contactName, setContactName] = useState("");
@@ -141,61 +99,27 @@ export default function Home() {
       try {
         const bioData = await api.getProfile();
         setBio(bioData);
-      } catch (err) { console.log("Using fallback bio details", err); }
+      } catch (err) { console.log("Failed to load bio", err); }
 
       try {
         const expData = await api.getExperiences();
         if (expData.length > 0) setExperiences(expData);
-      } catch (err) { console.log("Using fallback experiences", err); }
+      } catch (err) { console.log("Failed to load experiences", err); }
 
       try {
         const projData = await api.getProjects();
         if (projData.length > 0) setProjects(projData);
-      } catch (err) { console.log("Using fallback projects", err); }
+      } catch (err) { console.log("Failed to load projects", err); }
 
       try {
         const techData = await api.getTechnologies();
         if (techData.length > 0) setTechs(techData);
-      } catch (err) { console.log("Using fallback technologies", err); }
+      } catch (err) { console.log("Failed to load technologies", err); }
 
       setIsLoading(false);
     }
     loadData();
   }, []);
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center font-mono text-cyber-green relative overflow-hidden select-none">
-        {/* Subtle grid background */}
-        <div className="absolute inset-0 grid-bg opacity-10 pointer-events-none" />
-        
-        {/* Animated Cyber-circles */}
-        <div className="absolute w-[400px] h-[400px] rounded-full border border-cyber-green/5 animate-pulse" />
-        <div className="absolute w-[600px] h-[600px] rounded-full border border-cyber-green/[0.02] animate-spin [animation-duration:60s]" />
-
-        <div className="relative space-y-6 text-center z-10 max-w-sm px-6">
-          <div className="flex items-center justify-center space-x-3 text-sm tracking-widest font-bold">
-            <Terminal className="w-5 h-5 animate-pulse text-cyber-green" />
-            <span className="animate-pulse">INITIALISING_SYSTEM...</span>
-          </div>
-
-          <div className="w-64 h-1.5 bg-slate-900 border border-card-border/50 rounded-full overflow-hidden relative">
-            <motion.div 
-              initial={{ width: "0%" }}
-              animate={{ width: "100%" }}
-              transition={{ duration: 1.2, ease: "easeInOut" }}
-              className="h-full bg-primary-500 rounded-full shadow-[0_0_8px_rgba(244,63,94,0.6)]" 
-            />
-          </div>
-
-          <div className="text-[10px] text-text-muted flex flex-col space-y-1">
-            <span>connecting to database engine...</span>
-            <span className="text-cyber-green/60">handshake_established: ok</span>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   const handleContactSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -219,9 +143,11 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen grid-bg relative">
+    <div className="min-h-screen relative overflow-hidden bg-background">
+      <Background3D />
+      
       {/* Header / Navbar */}
-      <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-md border-b border-card-border">
+      <header className="sticky top-0 z-50 bg-background/60 backdrop-blur-xl border-b border-card-border shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <div className="flex items-center space-x-2 font-mono font-bold text-lg text-primary-500">
             <Terminal className="w-5 h-5" />
@@ -259,7 +185,7 @@ export default function Home() {
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="md:hidden fixed inset-x-0 top-16 z-40 bg-background/95 backdrop-blur-lg border-b border-card-border p-6 font-mono text-center flex flex-col space-y-1 shadow-2xl"
+            className="md:hidden fixed inset-x-0 top-16 z-40 bg-background/95 backdrop-blur-xl border-b border-card-border p-6 font-mono text-center flex flex-col space-y-1 shadow-2xl"
           >
             <a href="#about" onClick={() => setMobileMenuOpen(false)} className="py-3 rounded-lg hover:bg-card-bg hover:text-primary-500 transition-all font-semibold">./about</a>
             <a href="#experience" onClick={() => setMobileMenuOpen(false)} className="py-3 rounded-lg hover:bg-card-bg hover:text-primary-500 transition-all font-semibold">./experience</a>
@@ -270,40 +196,54 @@ export default function Home() {
         )}
       </AnimatePresence>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-28">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-28 relative z-10">
 
-        {/* HERO SECTION / terminal editor */}
-        <section id="about" className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+        {/* HERO SECTION */}
+        <section id="about" className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center min-h-[60vh]">
           <div className="lg:col-span-5 space-y-6">
-            <div className="inline-flex items-center space-x-2 px-3 py-1 text-xs font-mono bg-primary-500/10 text-primary-500 rounded-full border border-primary-500/20">
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="inline-flex items-center space-x-2 px-3 py-1 text-xs font-mono bg-primary-500/10 text-primary-500 rounded-full border border-primary-500/20 backdrop-blur-md"
+            >
               <span className="w-2 h-2 rounded-full bg-primary-500 animate-ping" />
               <span>Available for backend opportunities</span>
-            </div>
+            </motion.div>
 
-            <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight font-sans">
-              Hi, I&apos;m <span className="text-primary-500">{bio.name}</span>
+            <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight font-sans">
+              {bio ? (
+                <>Hi, I&apos;m <span className="text-primary-500 bg-clip-text text-transparent bg-gradient-to-r from-primary-500 to-cyber-orange">{bio.name}</span></>
+              ) : (
+                <div className="h-14 w-3/4 bg-card-border/40 animate-pulse rounded-lg" />
+              )}
             </h1>
 
             <h2 className="text-xl sm:text-2xl font-mono text-text-muted font-medium">
-              {bio.title}
+              {bio ? bio.title : <div className="h-8 w-2/3 bg-card-border/30 animate-pulse rounded-lg mt-2" />}
             </h2>
 
-            <p className="text-text-muted leading-relaxed font-sans">
-              {bio.about_me}
-            </p>
+            <div className="text-text-muted leading-relaxed font-sans text-lg">
+              {bio ? bio.about_me : (
+                <div className="space-y-3 mt-4">
+                  <div className="h-4 w-full bg-card-border/20 animate-pulse rounded" />
+                  <div className="h-4 w-5/6 bg-card-border/20 animate-pulse rounded" />
+                  <div className="h-4 w-4/6 bg-card-border/20 animate-pulse rounded" />
+                </div>
+              )}
+            </div>
 
-            <div className="flex flex-wrap gap-4 font-mono text-sm">
+            <div className="flex flex-wrap gap-4 font-mono text-sm pt-4">
               <a
                 href="#contact"
-                className="inline-flex items-center space-x-2 px-5 py-2.5 bg-primary-500 hover:bg-primary-600 text-white rounded-lg transition-colors cursor-pointer"
+                className="inline-flex items-center space-x-2 px-6 py-3 bg-primary-500 hover:bg-primary-600 text-white rounded-lg transition-transform hover:scale-105 cursor-pointer shadow-lg shadow-primary-500/30"
               >
                 <Mail className="w-4 h-4" />
                 <span>Contact Form</span>
               </a>
-              {bio.resume_url && (
+              {bio?.resume_url && (
                 <a
                   href={bio.resume_url}
-                  className="inline-flex items-center space-x-2 px-5 py-2.5 bg-card-bg border border-card-border hover:border-primary-500 transition-colors rounded-lg cursor-pointer"
+                  className="inline-flex items-center space-x-2 px-6 py-3 bg-card-bg/50 backdrop-blur-md border border-card-border hover:border-primary-500 hover:bg-card-bg transition-all rounded-lg cursor-pointer shadow-lg"
                 >
                   <FileText className="w-4 h-4" />
                   <span>View Resume</span>
@@ -311,41 +251,54 @@ export default function Home() {
               )}
             </div>
 
-            <div className="flex items-center space-x-4 pt-2">
-              <a href={bio.github_url} target="_blank" rel="noreferrer" aria-label="GitHub Profile" className="text-text-muted hover:text-primary-500 transition-colors">
-                <GithubIcon className="w-6 h-6" />
-              </a>
-              <a href={bio.linkedin_url} target="_blank" rel="noreferrer" aria-label="LinkedIn Profile" className="text-text-muted hover:text-primary-500 transition-colors">
-                <LinkedinIcon className="w-6 h-6" />
-              </a>
-              {bio.twitter_url && (
-                <a href={bio.twitter_url} target="_blank" rel="noreferrer" aria-label="Twitter Profile" className="text-text-muted hover:text-primary-500 transition-colors">
-                  <TwitterIcon className="w-6 h-6" />
-                </a>
+            <div className="flex items-center space-x-5 pt-4">
+              {bio ? (
+                <>
+                  <a href={bio.github_url} target="_blank" rel="noreferrer" aria-label="GitHub Profile" className="text-text-muted hover:text-primary-500 transition-colors transform hover:scale-110">
+                    <GithubIcon className="w-6 h-6" />
+                  </a>
+                  <a href={bio.linkedin_url} target="_blank" rel="noreferrer" aria-label="LinkedIn Profile" className="text-text-muted hover:text-primary-500 transition-colors transform hover:scale-110">
+                    <LinkedinIcon className="w-6 h-6" />
+                  </a>
+                  {bio.twitter_url && (
+                    <a href={bio.twitter_url} target="_blank" rel="noreferrer" aria-label="Twitter Profile" className="text-text-muted hover:text-primary-500 transition-colors transform hover:scale-110">
+                      <TwitterIcon className="w-6 h-6" />
+                    </a>
+                  )}
+                </>
+              ) : (
+                <div className="flex space-x-4">
+                  <div className="w-6 h-6 rounded-full bg-card-border/30 animate-pulse" />
+                  <div className="w-6 h-6 rounded-full bg-card-border/30 animate-pulse" />
+                  <div className="w-6 h-6 rounded-full bg-card-border/30 animate-pulse" />
+                </div>
               )}
             </div>
           </div>
 
           {/* Terminal Panel */}
-          <div className="lg:col-span-7">
-            <div className="rounded-xl overflow-hidden border border-card-border shadow-2xl bg-terminal-bg font-mono text-sm">
-              {/* Terminal Title Bar */}
-              <div className="bg-card-bg border-b border-card-border px-4 py-3 flex items-center justify-between">
+          <motion.div 
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.2 }}
+            className="lg:col-span-7"
+          >
+            <div className="rounded-xl overflow-hidden border border-card-border shadow-[0_8px_32px_0_rgba(0,0,0,0.3)] bg-terminal-bg/80 backdrop-blur-xl font-mono text-sm">
+              <div className="bg-card-bg/80 border-b border-card-border px-4 py-3 flex items-center justify-between">
                 <div className="flex items-center space-x-2">
-                  <span className="w-3 h-3 rounded-full bg-red-500/80 inline-block" />
-                  <span className="w-3 h-3 rounded-full bg-yellow-500/80 inline-block" />
-                  <span className="w-3 h-3 rounded-full bg-cyber-green/80 inline-block" />
+                  <span className="w-3 h-3 rounded-full bg-red-500/80 inline-block shadow-[0_0_8px_rgba(239,68,68,0.5)]" />
+                  <span className="w-3 h-3 rounded-full bg-yellow-500/80 inline-block shadow-[0_0_8px_rgba(234,179,8,0.5)]" />
+                  <span className="w-3 h-3 rounded-full bg-cyber-green/80 inline-block shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
                 </div>
                 <span className="text-xs text-text-muted">bash ~ mandell-ide</span>
                 <span className="w-6" />
               </div>
 
-              {/* Terminal Editor Tabs */}
-              <div className="bg-card-bg/50 border-b border-card-border px-4 flex space-x-1 text-xs">
+              <div className="bg-card-bg/40 border-b border-card-border px-4 flex space-x-1 text-xs">
                 <button
                   onClick={() => setActiveTab("profile")}
                   className={`px-3 py-2 cursor-pointer transition-colors border-b-2 font-medium ${activeTab === "profile"
-                    ? "border-primary-500 text-foreground bg-terminal-bg/30"
+                    ? "border-primary-500 text-foreground bg-terminal-bg/50"
                     : "border-transparent text-text-muted hover:text-foreground"
                     }`}
                 >
@@ -354,7 +307,7 @@ export default function Home() {
                 <button
                   onClick={() => setActiveTab("architecture")}
                   className={`px-3 py-2 cursor-pointer transition-colors border-b-2 font-medium ${activeTab === "architecture"
-                    ? "border-primary-500 text-foreground bg-terminal-bg/30"
+                    ? "border-primary-500 text-foreground bg-terminal-bg/50"
                     : "border-transparent text-text-muted hover:text-foreground"
                     }`}
                 >
@@ -363,7 +316,7 @@ export default function Home() {
                 <button
                   onClick={() => setActiveTab("logs")}
                   className={`px-3 py-2 cursor-pointer transition-colors border-b-2 font-medium ${activeTab === "logs"
-                    ? "border-primary-500 text-foreground bg-terminal-bg/30"
+                    ? "border-primary-500 text-foreground bg-terminal-bg/50"
                     : "border-transparent text-text-muted hover:text-foreground"
                     }`}
                 >
@@ -371,23 +324,22 @@ export default function Home() {
                 </button>
               </div>
 
-              {/* Terminal View Content */}
-              <div className="p-6 h-80 overflow-y-auto leading-relaxed text-terminal-text select-text bg-terminal-bg">
+              <div className="p-6 h-80 overflow-y-auto leading-relaxed text-terminal-text select-text">
                 {activeTab === "profile" && (
                   <pre className="text-cyber-green">
-                    {`{
+                    {bio ? `{
   "name": "${bio.name}",
   "role": "${bio.title}",
   "stack": {
     "languages": ["Python", "JavaScript", "SQL"],
-    "frameworks": ["FastAPI", "Django", "Fastapi", "React", "Next.js"],
+    "frameworks": ["FastAPI", "Django", "React", "Next.js"],
     "infrastructure": ["PostgreSQL", "Redis", "Celery", "Docker"]
   },
   "contact": {
     "email": "${bio.email}",
     "status": "accepting_payloads"
   }
-}`}
+}` : `{\n  "status": "loading..."\n}`}
                   </pre>
                 )}
 
@@ -438,160 +390,187 @@ export default function Home() {
                 )}
               </div>
             </div>
-          </div>
+          </motion.div>
         </section>
 
-        {/* WORK EXPERIENCE / TIMELINE */}
-        <section id="experience" className="space-y-10">
+        {/* WORK EXPERIENCE */}
+        <section id="experience" className="space-y-10 pt-10">
           <div className="border-l-4 border-primary-500 pl-4">
             <h2 className="text-3xl font-extrabold tracking-tight font-sans">Experience</h2>
             <p className="text-text-muted text-sm font-mono mt-1">./history/work_records</p>
           </div>
 
           <div className="relative border-l border-card-border ml-3 pl-8 space-y-12">
-            {experiences.map((exp) => (
-              <motion.div
-                key={exp.id}
-                initial={{ opacity: 0, x: -20 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5 }}
-                className="relative space-y-3"
-              >
-                {/* Marker Dot */}
-                <div className="absolute -left-[41px] top-1.5 w-6 h-6 rounded-full bg-card-bg border border-card-border flex items-center justify-center">
-                  <div className="w-2.5 h-2.5 rounded-full bg-primary-500" />
+            {isLoading ? (
+              // Skeleton for experiences
+              Array.from({ length: 2 }).map((_, i) => (
+                <div key={i} className="relative space-y-4">
+                  <div className="absolute -left-[41px] top-1.5 w-6 h-6 rounded-full bg-card-bg border border-card-border flex items-center justify-center">
+                    <div className="w-2.5 h-2.5 rounded-full bg-card-border/50 animate-pulse" />
+                  </div>
+                  <div className="h-6 w-48 bg-card-border/30 animate-pulse rounded" />
+                  <div className="h-4 w-32 bg-card-border/20 animate-pulse rounded" />
+                  <div className="h-24 w-full bg-card-border/10 animate-pulse rounded-lg" />
                 </div>
+              ))
+            ) : (
+              experiences.map((exp) => (
+                <motion.div
+                  key={exp.id}
+                  initial={{ opacity: 0, x: -20 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true, margin: "-100px" }}
+                  transition={{ duration: 0.5, type: "spring", bounce: 0.4 }}
+                  className="relative space-y-3"
+                >
+                  <div className="absolute -left-[41px] top-1.5 w-6 h-6 rounded-full bg-card-bg/80 backdrop-blur-sm border border-card-border flex items-center justify-center">
+                    <div className="w-2.5 h-2.5 rounded-full bg-primary-500 shadow-[0_0_8px_rgba(244,63,94,0.8)]" />
+                  </div>
 
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
-                  <h3 className="text-xl font-bold tracking-tight">{exp.role}</h3>
-                  <span className="text-xs font-mono px-3 py-1 bg-card-bg border border-card-border rounded-full text-text-muted self-start sm:self-auto">
-                    {exp.start_date} - {exp.end_date || "Present"}
-                  </span>
-                </div>
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
+                    <h3 className="text-xl font-bold tracking-tight">{exp.role}</h3>
+                    <span className="text-xs font-mono px-3 py-1 bg-card-bg/50 backdrop-blur-sm border border-card-border rounded-full text-text-muted self-start sm:self-auto shadow-sm">
+                      {exp.start_date} - {exp.end_date || "Present"}
+                    </span>
+                  </div>
 
-                <div className="flex items-center space-x-2 text-sm font-mono text-primary-500">
-                  <Briefcase className="w-4 h-4" />
-                  <span className="font-bold">{exp.company}</span>
-                </div>
+                  <div className="flex items-center space-x-2 text-sm font-mono text-primary-500">
+                    <Briefcase className="w-4 h-4" />
+                    <span className="font-bold">{exp.company}</span>
+                  </div>
 
-                <p className="text-text-muted leading-relaxed font-sans text-sm bg-card-bg/40 p-4 rounded-lg border border-card-border/50">
-                  {exp.description}
-                </p>
-              </motion.div>
-            ))}
+                  <p className="text-text-muted leading-relaxed font-sans text-sm bg-card-bg/30 backdrop-blur-md p-5 rounded-xl border border-card-border/50 shadow-lg">
+                    {exp.description}
+                  </p>
+                </motion.div>
+              ))
+            )}
           </div>
         </section>
 
-        {/* SKILLS / TECH STACK GRID */}
-        <section id="skills" className="space-y-10">
+        {/* SKILLS */}
+        <section id="skills" className="space-y-10 pt-10">
           <div className="border-l-4 border-cyber-green pl-4">
             <h2 className="text-3xl font-extrabold tracking-tight font-sans">Technology Stack</h2>
             <p className="text-text-muted text-sm font-mono mt-1">./dependencies/modules</p>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-            {techs.map((tech) => (
-              <motion.div
-                key={tech.id ?? tech.name}
-                whileHover={{ y: -5, borderColor: "rgba(16, 185, 129, 0.4)" }}
-                className="bg-card-bg border border-card-border p-4 rounded-xl flex flex-col justify-between h-36 transition-all relative overflow-hidden group cursor-default"
-              >
-                {/* Background glow on hover */}
-                <div className="absolute inset-0 bg-gradient-to-br from-cyber-green/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-5">
+            {isLoading ? (
+              Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="bg-card-bg/20 border border-card-border/30 h-36 rounded-xl animate-pulse" />
+              ))
+            ) : (
+              techs.map((tech) => (
+                <motion.div
+                  key={tech.id ?? tech.name}
+                  whileHover={{ y: -8, scale: 1.02 }}
+                  transition={{ type: "spring", stiffness: 300 }}
+                  className="bg-card-bg/40 backdrop-blur-xl border border-card-border/60 hover:border-cyber-green/50 hover:shadow-[0_8px_24px_rgba(16,185,129,0.15)] p-5 rounded-2xl flex flex-col justify-between h-40 transition-all relative overflow-hidden group cursor-default"
+                >
+                  <div className="absolute inset-0 bg-gradient-to-br from-cyber-green/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
-                {/* Icon row */}
-                <div className="flex items-start justify-between">
-                  <div className="w-9 h-9 flex items-center justify-center">
-                    <TechIcon iconName={tech.icon_name} name={tech.name} category={tech.category} />
-                  </div>
-                  <span className="text-[10px] font-mono uppercase bg-card-border/50 px-1.5 py-0.5 rounded text-text-muted leading-tight">
-                    {tech.category}
-                  </span>
-                </div>
-
-                {/* Name + proficiency */}
-                <div className="space-y-1.5 relative z-10">
-                  <h3 className="font-bold text-sm tracking-tight leading-tight">{tech.name}</h3>
-                  {tech.proficiency && (
-                    <div className="space-y-0.5">
-                      <div className="flex justify-between text-[9px] font-mono text-text-muted">
-                        <span>proficiency</span>
-                        <span className="text-cyber-green font-bold">{tech.proficiency}%</span>
-                      </div>
-                      <div className="h-0.5 bg-card-border/50 rounded-full overflow-hidden">
-                        <div
-                          className="h-full bg-cyber-green rounded-full"
-                          style={{ width: `${tech.proficiency}%` }}
-                        />
-                      </div>
+                  <div className="flex items-start justify-between relative z-10">
+                    <div className="w-10 h-10 flex items-center justify-center p-1 bg-background/50 rounded-lg border border-card-border/50 group-hover:border-cyber-green/30 transition-colors">
+                      <TechIcon iconName={tech.icon_name} name={tech.name} category={tech.category} />
                     </div>
-                  )}
-                </div>
-              </motion.div>
-            ))}
+                    <span className="text-[9px] font-mono uppercase bg-card-border/40 px-2 py-1 rounded text-text-muted leading-tight border border-card-border/20">
+                      {tech.category}
+                    </span>
+                  </div>
+
+                  <div className="space-y-2 relative z-10">
+                    <h3 className="font-bold text-sm tracking-tight leading-tight">{tech.name}</h3>
+                    {tech.proficiency && (
+                      <div className="space-y-1">
+                        <div className="flex justify-between text-[10px] font-mono text-text-muted">
+                          <span>lvl</span>
+                          <span className="text-cyber-green font-bold">{tech.proficiency}%</span>
+                        </div>
+                        <div className="h-1 bg-background/80 rounded-full overflow-hidden border border-card-border/30">
+                          <motion.div
+                            initial={{ width: 0 }}
+                            whileInView={{ width: `${tech.proficiency}%` }}
+                            viewport={{ once: true }}
+                            transition={{ duration: 1, delay: 0.2 }}
+                            className="h-full bg-gradient-to-r from-cyber-green/50 to-cyber-green rounded-full shadow-[0_0_5px_rgba(16,185,129,0.8)]"
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </motion.div>
+              ))
+            )}
           </div>
         </section>
 
-        {/* PROJECTS GALLERY */}
-        <section id="projects" className="space-y-10">
+        {/* PROJECTS */}
+        <section id="projects" className="space-y-10 pt-10">
           <div className="border-l-4 border-cyber-purple pl-4">
             <h2 className="text-3xl font-extrabold tracking-tight font-sans">Projects Showcase</h2>
             <p className="text-text-muted text-sm font-mono mt-1">./repositories/showcase</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {projects.map((proj) => (
-              <motion.div
-                key={proj.id}
-                whileHover={{ y: -8 }}
-                className="bg-card-bg border border-card-border rounded-2xl overflow-hidden flex flex-col justify-between shadow-lg h-full transition-all group hover:shadow-xl hover:border-cyber-purple/30"
-              >
-                <div className="p-6 sm:p-8 space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div className="p-2 rounded-lg bg-cyber-purple/10 text-cyber-purple">
-                      <Code className="w-5 h-5" />
+            {isLoading ? (
+              Array.from({ length: 2 }).map((_, i) => (
+                <div key={i} className="bg-card-bg/20 border border-card-border/30 h-72 rounded-2xl animate-pulse" />
+              ))
+            ) : (
+              projects.map((proj) => (
+                <motion.div
+                  key={proj.id}
+                  whileHover={{ y: -8 }}
+                  transition={{ type: "spring", stiffness: 300 }}
+                  className="bg-card-bg/40 backdrop-blur-xl border border-card-border/50 rounded-2xl overflow-hidden flex flex-col justify-between shadow-[0_8px_32px_rgba(0,0,0,0.1)] h-full transition-all group hover:shadow-[0_16px_48px_rgba(168,85,247,0.15)] hover:border-cyber-purple/40"
+                >
+                  <div className="p-8 space-y-5">
+                    <div className="flex items-center justify-between">
+                      <div className="p-2.5 rounded-xl bg-cyber-purple/10 text-cyber-purple border border-cyber-purple/20">
+                        <Code className="w-5 h-5" />
+                      </div>
+                      <div className="flex items-center space-x-4 text-text-muted">
+                        {proj.repo_link && (
+                          <a href={proj.repo_link} target="_blank" rel="noreferrer" aria-label="GitHub Repository" className="hover:text-cyber-purple transition-colors hover:scale-110 transform">
+                            <GithubIcon className="w-5 h-5" />
+                          </a>
+                        )}
+                        {proj.live_link && (
+                          <a href={proj.live_link} target="_blank" rel="noreferrer" aria-label="Live Project" className="hover:text-cyber-purple transition-colors hover:scale-110 transform">
+                            <ExternalLink className="w-5 h-5" />
+                          </a>
+                        )}
+                      </div>
                     </div>
-                    <div className="flex items-center space-x-3 text-text-muted">
-                      {proj.repo_link && (
-                        <a href={proj.repo_link} target="_blank" rel="noreferrer" aria-label="GitHub Repository" className="hover:text-cyber-purple transition-colors">
-                          <GithubIcon className="w-5 h-5" />
-                        </a>
-                      )}
-                      {proj.live_link && (
-                        <a href={proj.live_link} target="_blank" rel="noreferrer" aria-label="Live Project" className="hover:text-cyber-purple transition-colors">
-                          <ExternalLink className="w-5 h-5" />
-                        </a>
-                      )}
-                    </div>
+
+                    <h3 className="text-2xl font-bold tracking-tight group-hover:text-cyber-purple transition-colors">
+                      {proj.title}
+                    </h3>
+
+                    <p className="text-text-muted leading-relaxed font-sans text-sm">
+                      {proj.description}
+                    </p>
                   </div>
 
-                  <h3 className="text-xl font-bold tracking-tight group-hover:text-cyber-purple transition-colors">
-                    {proj.title}
-                  </h3>
-
-                  <p className="text-text-muted leading-relaxed font-sans text-sm">
-                    {proj.description}
-                  </p>
-                </div>
-
-                <div className="px-6 sm:px-8 pb-6 sm:pb-8 pt-4 border-t border-card-border bg-card-bg/20 flex flex-wrap gap-2">
-                  {proj.tech_tags.map((tag, idx) => (
-                    <span
-                      key={idx}
-                      className="text-xs font-mono px-2.5 py-1 bg-card-border/50 rounded-md text-text-muted border border-card-border/30 hover:text-cyber-purple transition-colors"
-                    >
-                      #{tag}
-                    </span>
-                  ))}
-                </div>
-              </motion.div>
-            ))}
+                  <div className="px-8 pb-8 pt-5 border-t border-card-border/50 bg-card-bg/30 flex flex-wrap gap-2">
+                    {proj.tech_tags?.map((tag: string, idx: number) => (
+                      <span
+                        key={idx}
+                        className="text-xs font-mono px-3 py-1.5 bg-background/50 rounded-md text-text-muted border border-card-border/30 hover:text-cyber-purple hover:border-cyber-purple/30 transition-colors shadow-sm"
+                      >
+                        #{tag}
+                      </span>
+                    ))}
+                  </div>
+                </motion.div>
+              ))
+            )}
           </div>
         </section>
 
-        {/* CONTACT FORM SECTION */}
-        <section id="contact" className="space-y-10">
+        {/* CONTACT FORM */}
+        <section id="contact" className="space-y-10 pt-10 pb-10">
           <div className="border-l-4 border-cyber-orange pl-4">
             <h2 className="text-3xl font-extrabold tracking-tight font-sans">Contact Terminal</h2>
             <p className="text-text-muted text-sm font-mono mt-1">./post/contact_form</p>
@@ -604,95 +583,94 @@ export default function Home() {
                 Submit a payload through this contact terminal. The FastAPI endpoint accepts input parameters securely and queues the dispatch worker using Celery immediately.
               </p>
 
-              <div className="p-5 rounded-xl border border-card-border bg-card-bg font-mono text-xs space-y-3">
-                <div className="flex items-center space-x-2 text-text-muted">
+              <div className="p-6 rounded-2xl border border-card-border/60 bg-card-bg/40 backdrop-blur-md font-mono text-xs space-y-4 shadow-lg">
+                <div className="flex items-center space-x-3 text-text-muted">
                   <ArrowRight className="w-4 h-4 text-cyber-orange" />
                   <span className="font-bold uppercase">Target Endpoint:</span>
-                  <span className="text-cyber-orange">POST /api/v1/contact/</span>
+                  <span className="text-cyber-orange bg-cyber-orange/10 px-2 py-1 rounded">POST /api/v1/contact/</span>
                 </div>
-                <div className="flex items-center space-x-2 text-text-muted">
+                <div className="flex items-center space-x-3 text-text-muted">
                   <ArrowRight className="w-4 h-4 text-cyber-orange" />
                   <span className="font-bold uppercase">Response Code:</span>
-                  <span className="text-green-500">202 Accepted</span>
+                  <span className="text-green-500 bg-green-500/10 px-2 py-1 rounded">202 Accepted</span>
                 </div>
-                <div className="flex items-center space-x-2 text-text-muted">
+                <div className="flex items-center space-x-3 text-text-muted">
                   <ArrowRight className="w-4 h-4 text-cyber-orange" />
                   <span className="font-bold uppercase">Queue broker:</span>
-                  <span>Redis queue {"->"} Celery Worker</span>
+                  <span className="text-text-muted bg-background/50 px-2 py-1 rounded">Redis {"->"} Celery</span>
                 </div>
               </div>
             </div>
 
-            {/* Form Panel */}
-            <div className="lg:col-span-7 bg-card-bg border border-card-border rounded-2xl p-6 sm:p-8">
+            <div className="lg:col-span-7 bg-card-bg/50 backdrop-blur-xl border border-card-border/60 rounded-3xl p-8 shadow-[0_16px_48px_rgba(0,0,0,0.2)]">
               <form onSubmit={handleContactSubmit} className="space-y-6">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 font-mono text-sm">
                   <div className="space-y-2">
-                    <label htmlFor="name" className="block text-xs font-bold uppercase text-text-muted">Name</label>
+                    <label htmlFor="name" className="block text-xs font-bold uppercase text-text-muted ml-1">Name</label>
                     <input
                       type="text"
                       id="name"
                       value={contactName}
                       onChange={(e) => setContactName(e.target.value)}
                       placeholder="e.g. Developer Mandell"
-                      className="w-full bg-background border border-card-border rounded-lg px-4 py-3 focus:outline-none focus:border-cyber-orange transition-colors"
+                      className="w-full bg-background/80 backdrop-blur-sm border border-card-border/60 rounded-xl px-5 py-4 focus:outline-none focus:border-cyber-orange focus:ring-1 focus:ring-cyber-orange/50 transition-all shadow-inner"
                       required
                     />
                   </div>
                   <div className="space-y-2">
-                    <label htmlFor="email" className="block text-xs font-bold uppercase text-text-muted">Email</label>
+                    <label htmlFor="email" className="block text-xs font-bold uppercase text-text-muted ml-1">Email</label>
                     <input
                       type="email"
                       id="email"
                       value={contactEmail}
                       onChange={(e) => setContactEmail(e.target.value)}
                       placeholder="e.g. admin@mandell.tech"
-                      className="w-full bg-background border border-card-border rounded-lg px-4 py-3 focus:outline-none focus:border-cyber-orange transition-colors"
+                      className="w-full bg-background/80 backdrop-blur-sm border border-card-border/60 rounded-xl px-5 py-4 focus:outline-none focus:border-cyber-orange focus:ring-1 focus:ring-cyber-orange/50 transition-all shadow-inner"
                       required
                     />
                   </div>
                 </div>
 
                 <div className="space-y-2 font-mono text-sm">
-                  <label htmlFor="message" className="block text-xs font-bold uppercase text-text-muted">Message payload</label>
+                  <label htmlFor="message" className="block text-xs font-bold uppercase text-text-muted ml-1">Message payload</label>
                   <textarea
                     id="message"
                     rows={5}
                     value={contactMessage}
                     onChange={(e) => setContactMessage(e.target.value)}
                     placeholder="Enter details..."
-                    className="w-full bg-background border border-card-border rounded-lg px-4 py-3 focus:outline-none focus:border-cyber-orange transition-colors"
+                    className="w-full bg-background/80 backdrop-blur-sm border border-card-border/60 rounded-xl px-5 py-4 focus:outline-none focus:border-cyber-orange focus:ring-1 focus:ring-cyber-orange/50 transition-all shadow-inner resize-none"
                     required
                   />
                 </div>
 
                 {formStatus !== "idle" && (
                   <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className={`p-4 rounded-lg font-mono text-xs flex items-start space-x-2 ${formStatus === "success"
-                      ? "bg-green-500/10 text-green-500 border border-green-500/20"
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className={`p-4 rounded-xl font-mono text-xs flex items-start space-x-3 shadow-md ${formStatus === "success"
+                      ? "bg-green-500/10 text-green-500 border border-green-500/30"
                       : formStatus === "error"
-                        ? "bg-red-500/10 text-red-500 border border-red-500/20"
-                        : "bg-primary-500/10 text-primary-500 border border-primary-500/20"
+                        ? "bg-red-500/10 text-red-500 border border-red-500/30"
+                        : "bg-primary-500/10 text-primary-500 border border-primary-500/30"
                       }`}
                   >
-                    {formStatus === "success" && <CheckCircle className="w-4 h-4 mt-0.5 shrink-0" />}
-                    <p>{formMessage || (formStatus === "loading" ? "Dispatching Celery worker process..." : "")}</p>
+                    {formStatus === "success" && <CheckCircle className="w-5 h-5 mt-0 shrink-0" />}
+                    <p className="text-sm mt-0.5">{formMessage || (formStatus === "loading" ? "Dispatching Celery worker process..." : "")}</p>
                   </motion.div>
                 )}
 
                 <button
                   type="submit"
                   disabled={formStatus === "loading"}
-                  className="w-full font-mono text-sm bg-cyber-orange hover:bg-amber-600 disabled:bg-card-border text-white py-3 rounded-lg font-bold flex items-center justify-center space-x-2 transition-colors cursor-pointer"
+                  className="w-full font-sans text-base bg-cyber-orange hover:bg-amber-500 disabled:bg-card-border/50 text-white py-4 rounded-xl font-bold flex items-center justify-center space-x-2 transition-all cursor-pointer shadow-[0_0_20px_rgba(245,158,11,0.3)] hover:shadow-[0_0_25px_rgba(245,158,11,0.5)] disabled:shadow-none"
                 >
                   {formStatus === "loading" ? (
-                    <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    <span className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
                   ) : (
                     <>
                       <span>Transmit Message</span>
-                      <ArrowRight className="w-4 h-4" />
+                      <ArrowRight className="w-5 h-5" />
                     </>
                   )}
                 </button>
@@ -704,13 +682,16 @@ export default function Home() {
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-card-border bg-card-bg/20 mt-20 font-mono text-xs text-text-muted">
+      <footer className="border-t border-card-border/30 bg-card-bg/10 backdrop-blur-sm mt-20 font-mono text-xs text-text-muted relative z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex flex-col sm:flex-row items-center justify-between gap-4">
           <p>© {new Date().getFullYear()} Mandell Portfolio. Rest API via Clean Architecture.</p>
           <div className="flex items-center space-x-6">
-            <a href="#about" className="hover:text-foreground">./top</a>
-            <span className="text-card-border">|</span>
-            <span className="text-cyber-green font-bold">Secure connection established</span>
+            <a href="#about" className="hover:text-primary-500 transition-colors">./top</a>
+            <span className="text-card-border/50">|</span>
+            <span className="text-cyber-green/80 font-bold flex items-center space-x-2">
+              <span className="w-2 h-2 rounded-full bg-cyber-green animate-pulse" />
+              <span>Secure connection established</span>
+            </span>
           </div>
         </div>
       </footer>

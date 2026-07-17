@@ -1,5 +1,5 @@
 import jwt
-from fastapi import BackgroundTasks, Depends, HTTPException, status
+from fastapi import BackgroundTasks, Depends, HTTPException, status, Request
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -45,7 +45,7 @@ def get_email_service(
 
 
 async def get_current_user(
-    token: str = Depends(oauth2_scheme),
+    request: Request,
     user_repo: IUserRepository = Depends(get_user_repository),
 ) -> User:
     credentials_exception = HTTPException(
@@ -53,6 +53,7 @@ async def get_current_user(
         detail="Could not validate credentials",
         headers={"WWW-Authenticate": "Bearer"},
     )
+    token = request.cookies.get("admin_token")
     if not token:
         raise credentials_exception
 

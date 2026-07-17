@@ -46,9 +46,7 @@ def _send_brevo_message(
         timeout=settings.SMTP_TIMEOUT_SECONDS,
     )
     if response.status_code >= 400:
-        raise Exception(
-            f"Brevo API error {response.status_code}: {response.text}"
-        )
+        raise Exception(f"Brevo API error {response.status_code}: {response.text}")
 
 
 def _send_smtp_message(msg: MIMEMultipart) -> None:
@@ -133,7 +131,9 @@ def send_otp_email_sync(email: str, otp: str) -> str:
 
         return f"Successfully sent OTP email to {email} via SMTP"
     except Exception as e:
-        error_msg = f"Email delivery failed. Brevo error: {brevo_error}. SMTP error: {str(e)}"
+        error_msg = (
+            f"Email delivery failed. Brevo error: {brevo_error}. SMTP error: {str(e)}"
+        )
         logger.error(
             f"Email delivery failed to send OTP reset email to {email}: {error_msg}"
         )
@@ -169,7 +169,11 @@ def send_contact_email_sync(name: str, email: str, message: str) -> str:
     """
 
     brevo_error = None
-    recipient = settings.BREVO_CONTACT_TO_EMAIL or settings.SMTP_TO_EMAIL or settings.SMTP_FROM_EMAIL
+    recipient = (
+        settings.BREVO_CONTACT_TO_EMAIL
+        or settings.SMTP_TO_EMAIL
+        or settings.SMTP_FROM_EMAIL
+    )
 
     if settings.BREVO_API_KEY:
         try:
@@ -212,7 +216,9 @@ def send_contact_email_sync(name: str, email: str, message: str) -> str:
 
         return f"Successfully sent contact email from {name} ({email}) via SMTP"
     except Exception as e:
-        error_msg = f"Email delivery failed. Brevo error: {brevo_error}. SMTP error: {str(e)}"
+        error_msg = (
+            f"Email delivery failed. Brevo error: {brevo_error}. SMTP error: {str(e)}"
+        )
         logger.error(
             f"Email delivery failed to send contact email from {name} ({email}): {error_msg}"
         )
@@ -230,7 +236,9 @@ def send_contact_email_sync(name: str, email: str, message: str) -> str:
                     f"for {name} ({email}): {str(io_err)}"
                 )
             if wrote_fallback:
-                return f"Logged contact email from {name} ({email}) (fallback completed)"
+                return (
+                    f"Logged contact email from {name} ({email}) (fallback completed)"
+                )
             return (
                 f"Failed to send contact email from {name} ({email}) "
                 "(fallback write failed)"

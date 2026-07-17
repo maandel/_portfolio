@@ -73,7 +73,11 @@ class Settings(BaseSettings):
                     "Please set BREVO_SENDER_EMAIL or SMTP_FROM_EMAIL to a valid email address."
                 )
 
-            recipient = self.BREVO_CONTACT_TO_EMAIL or self.SMTP_TO_EMAIL or self.SMTP_FROM_EMAIL
+            recipient = (
+                self.BREVO_CONTACT_TO_EMAIL
+                or self.SMTP_TO_EMAIL
+                or self.SMTP_FROM_EMAIL
+            )
             if not recipient or "your_email" in recipient:
                 raise ValueError(
                     "Brevo is enabled (BREVO_API_KEY is set), but contact recipient email is not configured. "

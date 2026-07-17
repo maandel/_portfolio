@@ -1,4 +1,5 @@
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, status, Request
+from app.infrastructure.config.limiter import limiter
 
 from app.domain import schemas
 from app.domain.interfaces import IEmailService
@@ -8,7 +9,9 @@ router = APIRouter(prefix="/contact", tags=["contact"])
 
 
 @router.post("/", status_code=status.HTTP_202_ACCEPTED)
+@limiter.limit("5/minute")
 async def submit_contact_form(
+    request: Request,
     message_data: schemas.ContactMessage,
     email_service: IEmailService = Depends(get_email_service),
 ):
