@@ -2,17 +2,22 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
+import * as api from "@/lib/api";
 
 export default function AdminIndex() {
   const router = useRouter();
 
   useEffect(() => {
-    const token = localStorage.getItem("admin_token");
-    if (token) {
-      router.replace("/admin/dashboard");
-    } else {
-      router.replace("/admin/login");
-    }
+    const checkAuth = async () => {
+      try {
+        // Hitting a protected endpoint to verify our HttpOnly cookie is valid
+        await api.getUsersCMS();
+        router.replace("/admin/dashboard");
+      } catch {
+        router.replace("/admin/login");
+      }
+    };
+    checkAuth();
   }, [router]);
 
   return (

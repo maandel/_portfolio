@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Terminal, Lock, Mail, ArrowRight, ShieldAlert, ShieldCheck } from "lucide-react";
@@ -15,11 +15,7 @@ export default function AdminLogin() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
-  useEffect(() => {
-    if (localStorage.getItem("admin_token")) {
-      router.replace("/admin/dashboard");
-    }
-  }, [router]);
+  // Session verification relies on HTTP-only cookies, redirect check is handled by layout or dashboard.
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,10 +24,7 @@ export default function AdminLogin() {
     setLoading(true);
 
     try {
-      const data = await api.adminLogin({ email, password });
-      localStorage.setItem("admin_token", data.access_token);
-      localStorage.setItem("admin_refresh_token", data.refresh_token);
-      localStorage.setItem("admin_email", email);
+      await api.adminLogin({ email, password });
       setSuccess("Authentication successful! Redirecting to secure dashboard...");
       setTimeout(() => {
         router.push("/admin/dashboard");

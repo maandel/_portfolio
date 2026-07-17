@@ -11,6 +11,7 @@ export default function ThemeToggle() {
     const systemTheme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
     const initialTheme = savedTheme || systemTheme || "dark";
 
+    // eslint-disable-next-line
     setTheme(initialTheme);
     if (initialTheme === "dark") {
       document.documentElement.classList.add("dark");

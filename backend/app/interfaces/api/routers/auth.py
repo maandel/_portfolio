@@ -1,4 +1,5 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Response, Request
+from app.infrastructure.config.limiter import limiter
 
 from app.domain import schemas
 from app.domain.interfaces import IEmailService, IOTPStore, IUserRepository
@@ -12,21 +13,43 @@ from app.use_cases.auth_use_cases import AuthUseCases
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 
-@router.post("/login", response_model=schemas.Token)
+@router.post("/login")
+@limiter.limit("10/minute")
 async def login(
+    request: Request,
     user_data: schemas.UserLogin,
+    response: Response,
     user_repo: IUserRepository = Depends(get_user_repository),
 ):
     use_cases = AuthUseCases(user_repo)
     try:
         tokens = await use_cases.login(user_data.email, user_data.password)
-        return tokens
+        response.set_cookie(
+            key="admin_token",
+            value=tokens.access_token,
+            httponly=True,
+            secure=True,
+            samesite="lax",
+            max_age=3600,
+        )
+        return {"message": "Login successful"}
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=str(e),
             headers={"WWW-Authenticate": "Bearer"},
         )
+
+
+@router.post("/logout")
+async def logout(response: Response):
+    response.delete_cookie(
+        key="admin_token",
+        httponly=True,
+        secure=True,
+        samesite="lax",
+    )
+    return {"message": "Logged out successfully"}
 
 
 @router.post("/forgot-password")

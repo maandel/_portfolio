@@ -4,8 +4,8 @@ import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
-  Terminal, LogOut, User, Briefcase, Code, Settings, Plus, Trash2, Edit2,
-  Check, X, ShieldAlert, ShieldCheck, Database, Layers, ArrowLeft, Users, Shield, ShieldX, KeyRound, Loader2,
+  Terminal, LogOut, User, Briefcase, Code, Plus, Trash2, Edit2,
+  X, ShieldAlert, ShieldCheck, Database, ArrowLeft, Users, Shield, Loader2,
   FolderOpen, Cpu, GitBranch, ExternalLink, UserX, UserCheck
 } from "lucide-react";
 import * as api from "@/lib/api";
@@ -21,6 +21,77 @@ function safeUrl(url: string | null | undefined): string | null {
     return null;
   }
 }
+
+const PAGE_SIZE = 5;
+
+// Reusable Pagination component
+const Pagination = ({
+  total, page, onPage
+}: { total: number; page: number; onPage: (p: number) => void }) => {
+  const totalPages = Math.ceil(total / PAGE_SIZE);
+  if (totalPages <= 1) return null;
+  return (
+    <div className="flex items-center justify-between pt-3 border-t border-card-border mt-2">
+      <span className="text-xs font-mono text-text-muted">
+        Page {page} of {totalPages} &nbsp;&middot;&nbsp; {total} records
+      </span>
+      <div className="flex items-center space-x-1">
+        <button
+          onClick={() => onPage(1)}
+          disabled={page === 1}
+          className="px-2 py-1 text-xs font-mono rounded border border-card-border hover:bg-card-border/40 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-colors"
+        >
+          «
+        </button>
+        <button
+          onClick={() => onPage(page - 1)}
+          disabled={page === 1}
+          className="px-2 py-1 text-xs font-mono rounded border border-card-border hover:bg-card-border/40 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-colors"
+        >
+          ‹ Prev
+        </button>
+        {Array.from({ length: totalPages }, (_, i) => i + 1)
+          .filter(p => p === 1 || p === totalPages || Math.abs(p - page) <= 1)
+          .reduce<(number | "...")[]>((acc, p, idx, arr) => {
+            if (idx > 0 && p - (arr[idx - 1] as number) > 1) acc.push("...");
+            acc.push(p);
+            return acc;
+          }, [])
+          .map((p, i) =>
+            p === "..." ? (
+              <span key={`ellipsis-${i}`} className="px-1.5 text-xs text-text-muted font-mono">…</span>
+            ) : (
+              <button
+                key={p}
+                onClick={() => onPage(p as number)}
+                className={`px-2.5 py-1 text-xs font-mono rounded border transition-colors cursor-pointer ${
+                  page === p
+                    ? "bg-primary-500 border-primary-500 text-white"
+                    : "border-card-border hover:bg-card-border/40"
+                }`}
+              >
+                {p}
+              </button>
+            )
+          )}
+        <button
+          onClick={() => onPage(page + 1)}
+          disabled={page === totalPages}
+          className="px-2 py-1 text-xs font-mono rounded border border-card-border hover:bg-card-border/40 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-colors"
+        >
+          Next ›
+        </button>
+        <button
+          onClick={() => onPage(totalPages)}
+          disabled={page === totalPages}
+          className="px-2 py-1 text-xs font-mono rounded border border-card-border hover:bg-card-border/40 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-colors"
+        >
+          »
+        </button>
+      </div>
+    </div>
+  );
+};
 
 export default function AdminDashboard() {
   const router = useRouter();
@@ -47,7 +118,7 @@ export default function AdminDashboard() {
   const [bioLinkedin, setBioLinkedin] = useState("");
   const [bioTwitter, setBioTwitter] = useState("");
   const [bioAvatar, setBioAvatar] = useState("");
-  const [bioId, setBioId] = useState<number | null>(null);
+  // bioId removed
 
   const [experiences, setExperiences] = useState<any[]>([]);
   const [expId, setExpId] = useState<number | null>(null);
@@ -87,7 +158,6 @@ export default function AdminDashboard() {
   const [modalError, setModalError] = useState("");
 
   // Pagination state
-  const PAGE_SIZE = 5;
   const [expPage, setExpPage] = useState(1);
   const [projPage, setProjPage] = useState(1);
   const [techPage, setTechPage] = useState(1);
@@ -109,19 +179,23 @@ export default function AdminDashboard() {
   };
 
   useEffect(() => {
-    const token = localStorage.getItem("admin_token");
-    if (!token) {
-      router.replace("/admin/login");
-      return;
-    }
-    setAuthorized(true);
-    setAdminEmail(localStorage.getItem("admin_email") || "admin@mandell.tech");
+    const initDashboard = async () => {
+      try {
+        await api.getUsersCMS();
+        setAuthorized(true);
+        setAdminEmail("admin@mandell.tech");
 
-    loadBioData();
-    loadExperiencesData();
-    loadProjectsData();
-    loadTechnologiesData();
-    loadUsersData();
+        loadBioData();
+        loadExperiencesData();
+        loadProjectsData();
+        loadTechnologiesData();
+        loadUsersData();
+      } catch {
+        router.replace("/admin/login");
+      }
+    };
+    initDashboard();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [router]);
 
   const showSuccess = (msg: string) => {
@@ -134,10 +208,10 @@ export default function AdminDashboard() {
     setTimeout(() => setErrorMsg(""), 4000);
   };
 
-  const loadBioData = async () => {
+  async function loadBioData() {
     try {
       const data = await api.getProfile();
-      setBioId(data.id);
+      // setBioId(data.id);
       setBioName(data.name || "");
       setBioTitle(data.title || "");
       setBioAbout(data.about_me || "");
@@ -147,7 +221,7 @@ export default function AdminDashboard() {
       setBioLinkedin(data.linkedin_url || "");
       setBioTwitter(data.twitter_url || "");
       setBioAvatar(data.avatar_url || "");
-    } catch (err) {
+    } catch {
       console.log("No profile in DB yet.");
     }
   };
@@ -176,7 +250,7 @@ export default function AdminDashboard() {
     }
   };
 
-  const loadExperiencesData = async () => {
+  async function loadExperiencesData() {
     try {
       const data = await api.getExperiences();
       setExperiences(data);
@@ -257,7 +331,7 @@ export default function AdminDashboard() {
     );
   };
 
-  const loadProjectsData = async () => {
+  async function loadProjectsData() {
     try {
       const data = await api.getProjects();
       setProjects(data);
@@ -339,7 +413,7 @@ export default function AdminDashboard() {
     );
   };
 
-  const loadTechnologiesData = async () => {
+  async function loadTechnologiesData() {
     try {
       const data = await api.getTechnologies();
       setTechs(data);
@@ -417,7 +491,7 @@ export default function AdminDashboard() {
     );
   };
 
-  const loadUsersData = async () => {
+  async function loadUsersData() {
     try {
       const data = await api.getUsersCMS();
       setUsers(data);
@@ -481,7 +555,7 @@ export default function AdminDashboard() {
         await api.updateUserCMS(editingUserId, payload);
         showSuccess(`Successfully updated user details for: ${userEmail}`);
         if (editingUserId === users.find(u => u.email === adminEmail)?.id) {
-          localStorage.setItem("admin_email", userEmail);
+          // localStorage.setItem("admin_email", userEmail);
           setAdminEmail(userEmail);
         }
       } else {
@@ -525,81 +599,14 @@ export default function AdminDashboard() {
     );
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem("admin_token");
-    localStorage.removeItem("admin_refresh_token");
-    localStorage.removeItem("admin_email");
+  const handleLogout = async () => {
+    try {
+      await api.adminLogout();
+    } catch {}
     router.replace("/admin/login");
   };
 
-  // Reusable Pagination component
-  const Pagination = ({
-    total, page, onPage
-  }: { total: number; page: number; onPage: (p: number) => void }) => {
-    const totalPages = Math.ceil(total / PAGE_SIZE);
-    if (totalPages <= 1) return null;
-    return (
-      <div className="flex items-center justify-between pt-3 border-t border-card-border mt-2">
-        <span className="text-xs font-mono text-text-muted">
-          Page {page} of {totalPages} &nbsp;&middot;&nbsp; {total} records
-        </span>
-        <div className="flex items-center space-x-1">
-          <button
-            onClick={() => onPage(1)}
-            disabled={page === 1}
-            className="px-2 py-1 text-xs font-mono rounded border border-card-border hover:bg-card-border/40 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-colors"
-          >
-            «
-          </button>
-          <button
-            onClick={() => onPage(page - 1)}
-            disabled={page === 1}
-            className="px-2 py-1 text-xs font-mono rounded border border-card-border hover:bg-card-border/40 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-colors"
-          >
-            ‹ Prev
-          </button>
-          {Array.from({ length: totalPages }, (_, i) => i + 1)
-            .filter(p => p === 1 || p === totalPages || Math.abs(p - page) <= 1)
-            .reduce<(number | "...")[]>((acc, p, idx, arr) => {
-              if (idx > 0 && p - (arr[idx - 1] as number) > 1) acc.push("...");
-              acc.push(p);
-              return acc;
-            }, [])
-            .map((p, i) =>
-              p === "..." ? (
-                <span key={`ellipsis-${i}`} className="px-1.5 text-xs text-text-muted font-mono">…</span>
-              ) : (
-                <button
-                  key={p}
-                  onClick={() => onPage(p as number)}
-                  className={`px-2.5 py-1 text-xs font-mono rounded border transition-colors cursor-pointer ${
-                    page === p
-                      ? "bg-primary-500 border-primary-500 text-white"
-                      : "border-card-border hover:bg-card-border/40"
-                  }`}
-                >
-                  {p}
-                </button>
-              )
-            )}
-          <button
-            onClick={() => onPage(page + 1)}
-            disabled={page === totalPages}
-            className="px-2 py-1 text-xs font-mono rounded border border-card-border hover:bg-card-border/40 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-colors"
-          >
-            Next ›
-          </button>
-          <button
-            onClick={() => onPage(totalPages)}
-            disabled={page === totalPages}
-            className="px-2 py-1 text-xs font-mono rounded border border-card-border hover:bg-card-border/40 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-colors"
-          >
-            »
-          </button>
-        </div>
-      </div>
-    );
-  };
+
 
   if (!authorized) {
     return (
