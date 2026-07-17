@@ -13,13 +13,12 @@ from app.interfaces.api.routers.auth import router as auth_router
 from app.interfaces.api.routers.contact import router as contact_router
 from app.interfaces.api.routers.portfolio import router as portfolio_router
 from app.interfaces.api.routers.users import router as users_router
-from app.seed import seed_database
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Schema migrations are handled by Alembic in production.
-    await seed_database()
+    # Seeding removed.
     yield
 
 

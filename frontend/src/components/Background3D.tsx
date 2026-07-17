@@ -10,7 +10,7 @@ import { useTheme } from "next-themes";
 function Starfield(props: any) {
   const ref = useRef<any>(null);
   // Generate 5000 particles in a sphere of radius 1.5
-  const sphere = useMemo(() => random.inSphere(new Float32Array(5000), { radius: 1.5 }), []);
+  const sphere = useMemo(() => random.inSphere(new Float32Array(5001), { radius: 1.5 }), []);
   const { theme, resolvedTheme } = useTheme();
 
   // Determine color based on theme (subtle white for dark, dark grey for light)
