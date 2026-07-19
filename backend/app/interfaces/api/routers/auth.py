@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Response, Request
 from app.infrastructure.config.limiter import limiter
+from app.infrastructure.config.settings import settings
 
 from app.domain import schemas
 from app.domain.interfaces import IEmailService, IOTPStore, IUserRepository
@@ -30,6 +31,7 @@ async def login(
             httponly=True,
             secure=True,
             samesite="none",
+            domain=settings.ACTIVE_COOKIE_DOMAIN,
             max_age=3600,
         )
         return {"message": "Login successful"}
@@ -48,6 +50,7 @@ async def logout(response: Response):
         httponly=True,
         secure=True,
         samesite="none",
+        domain=settings.ACTIVE_COOKIE_DOMAIN,
     )
     return {"message": "Logged out successfully"}
 
