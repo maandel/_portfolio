@@ -40,6 +40,35 @@ export default function RootLayout({
       lang="en"
       className={`${inter.variable} ${jetbrainsMono.variable} h-full antialiased`}
     >
+      <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@graph": [
+                {
+                  "@type": "WebSite",
+                  "url": "https://mandell.tech",
+                  "name": "Mandell Tech",
+                  "description": "Portfolio of Okiki Nelson Suvwe, a Backend-focused Software Engineer."
+                },
+                {
+                  "@type": "Person",
+                  "name": "Okiki Nelson Suvwe",
+                  "alternateName": "Developer Mandell",
+                  "jobTitle": "Backend Engineer",
+                  "url": "https://mandell.tech",
+                  "sameAs": [
+                    "https://github.com/maandel",
+                    "https://linkedin.com/in/okiki-nelson-50863815a"
+                  ]
+                }
+              ]
+            })
+          }}
+        />
+      </head>
       <body className="min-h-full flex flex-col bg-background text-foreground transition-colors duration-300">
         {children}
       </body>
