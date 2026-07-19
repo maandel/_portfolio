@@ -6,7 +6,7 @@ import Link from "next/link";
 import {
   Terminal, LogOut, User, Briefcase, Code, Plus, Trash2, Edit2,
   X, ShieldAlert, ShieldCheck, Database, ArrowLeft, Users, Shield, Loader2,
-  FolderOpen, Cpu, GitBranch, ExternalLink, UserX, UserCheck
+  FolderOpen, Cpu, GitBranch, ExternalLink, UserX, UserCheck, Menu
 } from "lucide-react";
 import * as api from "@/lib/api";
 import ThemeToggle from "@/components/ThemeToggle";
@@ -99,6 +99,7 @@ export default function AdminDashboard() {
   const [authorized, setAuthorized] = useState(false);
   const [adminEmail, setAdminEmail] = useState("");
   const [activeTab, setActiveTab] = useState<"bio" | "experiences" | "projects" | "technologies" | "users">("bio");
+  const [sidebarOpen, setSidebarOpen] = useState(true);
 
   const [successMsg, setSuccessMsg] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
@@ -617,12 +618,19 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground flex flex-col font-sans">
+    <div className="h-screen bg-background text-foreground flex flex-col font-sans overflow-hidden">
 
       {/* Top CMS Header */}
-      <header className="bg-card-bg border-b border-card-border px-4 py-3 sm:px-6 sm:py-4 flex items-center justify-between shadow-sm">
+      <header className="bg-card-bg border-b border-card-border px-4 py-3 sm:px-6 sm:py-4 flex items-center justify-between shadow-sm z-30 shrink-0">
         {/* Left Side */}
-        <div className="flex items-center space-x-2 min-w-0">
+        <div className="flex items-center space-x-3 min-w-0">
+          <button 
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            className="p-1.5 -ml-1.5 hover:bg-card-border/50 rounded-md transition-colors text-text-muted hover:text-foreground cursor-pointer"
+            aria-label="Toggle Sidebar"
+          >
+            <Menu className="w-5 h-5" />
+          </button>
           <div className="flex items-center space-x-2 font-mono text-primary-500 font-bold text-sm sm:text-base min-w-0">
             <Terminal className="w-4 h-4 sm:w-5 sm:h-5 shrink-0" />
             <span className="truncate max-w-[120px] xs:max-w-[160px] sm:max-w-none">mandell.tech/admin/dashboard</span>
@@ -653,56 +661,56 @@ export default function AdminDashboard() {
       </header>
 
       {/* Main CMS Split Panel */}
-      <div className="flex-1 flex flex-col md:flex-row max-w-7xl w-full mx-auto p-4 sm:p-6 gap-4 sm:gap-6">
+      <div className="flex-1 flex overflow-hidden relative">
 
-        {/* Sidebar Nav (Util layout) */}
-        <aside className="w-full md:w-64 flex flex-col gap-2 shrink-0">
-          <h2 className="text-xs font-bold font-mono text-text-muted uppercase px-3 mb-2 tracking-wider">CMS Collections</h2>
+        {/* Sidebar Nav */}
+        <aside className={`absolute md:static inset-y-0 left-0 z-20 w-64 bg-card-bg border-r border-card-border p-4 flex flex-col gap-2 shrink-0 transition-transform duration-300 ease-in-out overflow-y-auto ${sidebarOpen ? "translate-x-0" : "-translate-x-full hidden"}`}>
+          <h2 className="text-xs font-bold font-mono text-text-muted uppercase px-3 mb-2 tracking-wider mt-2">CMS Collections</h2>
           <button
-            onClick={() => setActiveTab("bio")}
+            onClick={() => { setActiveTab("bio"); setSidebarOpen(false); }}
             className={`w-full text-left px-4 py-2.5 rounded-lg text-sm font-medium transition-colors flex items-center space-x-3 cursor-pointer ${activeTab === "bio"
                 ? "bg-primary-500 text-white"
-                : "bg-card-bg border border-card-border hover:bg-card-border/30"
+                : "bg-background border border-card-border hover:bg-card-border/30 text-foreground"
               }`}
           >
             <User className="w-4 h-4" />
             <span>User Profile & Bio</span>
           </button>
           <button
-            onClick={() => setActiveTab("experiences")}
+            onClick={() => { setActiveTab("experiences"); setSidebarOpen(false); }}
             className={`w-full text-left px-4 py-2.5 rounded-lg text-sm font-medium transition-colors flex items-center space-x-3 cursor-pointer ${activeTab === "experiences"
                 ? "bg-primary-500 text-white"
-                : "bg-card-bg border border-card-border hover:bg-card-border/30"
+                : "bg-background border border-card-border hover:bg-card-border/30 text-foreground"
               }`}
           >
             <Briefcase className="w-4 h-4" />
             <span>Experience Timeline</span>
           </button>
           <button
-            onClick={() => setActiveTab("projects")}
+            onClick={() => { setActiveTab("projects"); setSidebarOpen(false); }}
             className={`w-full text-left px-4 py-2.5 rounded-lg text-sm font-medium transition-colors flex items-center space-x-3 cursor-pointer ${activeTab === "projects"
                 ? "bg-primary-500 text-white"
-                : "bg-card-bg border border-card-border hover:bg-card-border/30"
+                : "bg-background border border-card-border hover:bg-card-border/30 text-foreground"
               }`}
           >
             <Code className="w-4 h-4" />
             <span>Projects Showcase</span>
           </button>
           <button
-            onClick={() => setActiveTab("technologies")}
+            onClick={() => { setActiveTab("technologies"); setSidebarOpen(false); }}
             className={`w-full text-left px-4 py-2.5 rounded-lg text-sm font-medium transition-colors flex items-center space-x-3 cursor-pointer ${activeTab === "technologies"
                 ? "bg-primary-500 text-white"
-                : "bg-card-bg border border-card-border hover:bg-card-border/30"
+                : "bg-background border border-card-border hover:bg-card-border/30 text-foreground"
               }`}
           >
             <Database className="w-4 h-4" />
             <span>Technologies Stack</span>
           </button>
           <button
-            onClick={() => setActiveTab("users")}
+            onClick={() => { setActiveTab("users"); setSidebarOpen(false); }}
             className={`w-full text-left px-4 py-2.5 rounded-lg text-sm font-medium transition-colors flex items-center space-x-3 cursor-pointer ${activeTab === "users"
                 ? "bg-primary-500 text-white"
-                : "bg-card-bg border border-card-border hover:bg-card-border/30"
+                : "bg-background border border-card-border hover:bg-card-border/30 text-foreground"
               }`}
           >
             <Users className="w-4 h-4" />
@@ -710,7 +718,7 @@ export default function AdminDashboard() {
           </button>
 
           {/* Quick CMS Diagnostics */}
-          <div className="mt-8 p-4 rounded-lg bg-card-bg border border-card-border font-mono text-[10px] text-text-muted space-y-2 select-text">
+          <div className="mt-8 p-4 rounded-lg bg-background border border-card-border font-mono text-[10px] text-text-muted space-y-2 select-text mt-auto mb-4">
             <p className="font-bold text-xs uppercase tracking-wider text-foreground mb-1 select-none">API Diagnostics</p>
             <div className="flex justify-between"><span>Status:</span><span className="text-green-500">CONNECTED</span></div>
             <div className="flex justify-between"><span>Engine:</span><span>FASTAPI + SQLA</span></div>
@@ -719,8 +727,17 @@ export default function AdminDashboard() {
           </div>
         </aside>
 
+        {/* Backdrop for mobile */}
+        {sidebarOpen && (
+          <div 
+            className="md:hidden fixed inset-0 bg-black/50 z-10"
+            onClick={() => setSidebarOpen(false)}
+          />
+        )}
+
         {/* CMS Tab workspace */}
-        <main className="flex-1 bg-card-bg border border-card-border rounded-xl p-6 sm:p-8 shadow-sm flex flex-col justify-between overflow-y-auto">
+        <main className="flex-1 flex flex-col overflow-y-auto bg-background p-4 sm:p-8">
+          <div className="max-w-6xl w-full mx-auto bg-card-bg border border-card-border rounded-xl p-6 sm:p-8 shadow-sm">
 
           {/* Notifications banner */}
           {(successMsg || errorMsg) && (
@@ -856,7 +873,7 @@ export default function AdminDashboard() {
                 <button
                   type="submit"
                   disabled={loadingBio}
-                  className="px-5 py-2.5 bg-primary-500 hover:bg-primary-600 disabled:bg-card-border disabled:opacity-50 disabled:cursor-not-allowed text-white rounded font-bold cursor-pointer transition-colors flex items-center justify-center space-x-2"
+                  className="px-5 py-2.5 bg-primary-500 hover:bg-primary-600 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded font-bold cursor-pointer transition-colors flex items-center justify-center space-x-2"
                 >
                   {loadingBio ? (
                     <>
@@ -882,7 +899,7 @@ export default function AdminDashboard() {
                 <button
                   onClick={openAddExp}
                   disabled={loadingExp}
-                  className="inline-flex items-center space-x-1 px-3 py-2 bg-primary-500 hover:bg-primary-600 disabled:bg-card-border text-white rounded text-xs font-mono font-bold cursor-pointer transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="inline-flex items-center space-x-1 px-3 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded text-xs font-mono font-bold cursor-pointer transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <Plus className="w-4 h-4" />
                   <span>Add Experience</span>
@@ -969,7 +986,7 @@ export default function AdminDashboard() {
                 <button
                   onClick={openAddProj}
                   disabled={loadingProj}
-                  className="inline-flex items-center space-x-1 px-3 py-2 bg-primary-500 hover:bg-primary-600 disabled:bg-card-border text-white rounded text-xs font-mono font-bold cursor-pointer transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="inline-flex items-center space-x-1 px-3 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded text-xs font-mono font-bold cursor-pointer transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <Plus className="w-4 h-4" />
                   <span>Add Project</span>
@@ -1105,7 +1122,7 @@ export default function AdminDashboard() {
                 <button
                   onClick={openAddTech}
                   disabled={loadingTech}
-                  className="inline-flex items-center space-x-1 px-3 py-2 bg-primary-500 hover:bg-primary-600 disabled:bg-card-border text-white rounded text-xs font-mono font-bold cursor-pointer transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="inline-flex items-center space-x-1 px-3 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded text-xs font-mono font-bold cursor-pointer transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <Plus className="w-4 h-4" />
                   <span>Add Tech</span>
@@ -1212,7 +1229,7 @@ export default function AdminDashboard() {
                 <button
                   onClick={openAddUser}
                   disabled={loadingUser}
-                  className="inline-flex items-center space-x-1 px-3 py-2 bg-primary-500 hover:bg-primary-600 disabled:bg-card-border text-white rounded text-xs font-mono font-bold cursor-pointer transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="inline-flex items-center space-x-1 px-3 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded text-xs font-mono font-bold cursor-pointer transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <Plus className="w-4 h-4" />
                   <span>Add Admin/User</span>
@@ -1324,6 +1341,7 @@ export default function AdminDashboard() {
             </div>
           )}
 
+          </div>
         </main>
       </div>
 
@@ -1436,7 +1454,7 @@ export default function AdminDashboard() {
                 <button
                   type="submit"
                   disabled={loadingExp}
-                  className="inline-flex items-center space-x-2 px-4 py-2 bg-primary-500 hover:bg-primary-600 disabled:bg-card-border text-white rounded font-bold transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="inline-flex items-center space-x-2 px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded font-bold transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {loadingExp ? (
                     <>
@@ -1563,7 +1581,7 @@ export default function AdminDashboard() {
                 <button
                   type="submit"
                   disabled={loadingProj}
-                  className="inline-flex items-center space-x-2 px-4 py-2 bg-primary-500 hover:bg-primary-600 disabled:bg-card-border text-white rounded font-bold transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="inline-flex items-center space-x-2 px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded font-bold transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {loadingProj ? (
                     <>
@@ -1689,7 +1707,7 @@ export default function AdminDashboard() {
                 <button
                   type="submit"
                   disabled={loadingTech}
-                  className="inline-flex items-center space-x-2 px-4 py-2 bg-primary-500 hover:bg-primary-600 disabled:bg-card-border text-white rounded font-bold transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="inline-flex items-center space-x-2 px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded font-bold transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {loadingTech ? (
                     <>
@@ -1791,7 +1809,7 @@ export default function AdminDashboard() {
                 <button
                   type="submit"
                   disabled={loadingUser}
-                  className="inline-flex items-center space-x-2 px-4 py-2 bg-primary-500 hover:bg-primary-600 disabled:bg-card-border text-white rounded font-bold transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="inline-flex items-center space-x-2 px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded font-bold transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {loadingUser ? (
                     <>
