@@ -101,6 +101,13 @@ export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState<"bio" | "experiences" | "projects" | "technologies" | "users">("bio");
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
+  const handleTabClick = (tab: "bio" | "experiences" | "projects" | "technologies" | "users") => {
+    setActiveTab(tab);
+    if (window.innerWidth < 768) {
+      setSidebarOpen(false);
+    }
+  };
+
   const [successMsg, setSuccessMsg] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
 
@@ -667,7 +674,7 @@ export default function AdminDashboard() {
         <aside className={`absolute md:static inset-y-0 left-0 z-20 w-64 bg-card-bg border-r border-card-border p-4 flex flex-col gap-2 shrink-0 transition-transform duration-300 ease-in-out overflow-y-auto ${sidebarOpen ? "translate-x-0" : "-translate-x-full hidden"}`}>
           <h2 className="text-xs font-bold font-mono text-text-muted uppercase px-3 mb-2 tracking-wider mt-2">CMS Collections</h2>
           <button
-            onClick={() => { setActiveTab("bio"); setSidebarOpen(false); }}
+            onClick={() => handleTabClick("bio")}
             className={`w-full text-left px-4 py-2.5 rounded-lg text-sm font-medium transition-colors flex items-center space-x-3 cursor-pointer ${activeTab === "bio"
                 ? "bg-primary-500 text-white"
                 : "bg-background border border-card-border hover:bg-card-border/30 text-foreground"
@@ -677,7 +684,7 @@ export default function AdminDashboard() {
             <span>User Profile & Bio</span>
           </button>
           <button
-            onClick={() => { setActiveTab("experiences"); setSidebarOpen(false); }}
+            onClick={() => handleTabClick("experiences")}
             className={`w-full text-left px-4 py-2.5 rounded-lg text-sm font-medium transition-colors flex items-center space-x-3 cursor-pointer ${activeTab === "experiences"
                 ? "bg-primary-500 text-white"
                 : "bg-background border border-card-border hover:bg-card-border/30 text-foreground"
@@ -687,7 +694,7 @@ export default function AdminDashboard() {
             <span>Experience Timeline</span>
           </button>
           <button
-            onClick={() => { setActiveTab("projects"); setSidebarOpen(false); }}
+            onClick={() => handleTabClick("projects")}
             className={`w-full text-left px-4 py-2.5 rounded-lg text-sm font-medium transition-colors flex items-center space-x-3 cursor-pointer ${activeTab === "projects"
                 ? "bg-primary-500 text-white"
                 : "bg-background border border-card-border hover:bg-card-border/30 text-foreground"
@@ -697,7 +704,7 @@ export default function AdminDashboard() {
             <span>Projects Showcase</span>
           </button>
           <button
-            onClick={() => { setActiveTab("technologies"); setSidebarOpen(false); }}
+            onClick={() => handleTabClick("technologies")}
             className={`w-full text-left px-4 py-2.5 rounded-lg text-sm font-medium transition-colors flex items-center space-x-3 cursor-pointer ${activeTab === "technologies"
                 ? "bg-primary-500 text-white"
                 : "bg-background border border-card-border hover:bg-card-border/30 text-foreground"
@@ -707,7 +714,7 @@ export default function AdminDashboard() {
             <span>Technologies Stack</span>
           </button>
           <button
-            onClick={() => { setActiveTab("users"); setSidebarOpen(false); }}
+            onClick={() => handleTabClick("users")}
             className={`w-full text-left px-4 py-2.5 rounded-lg text-sm font-medium transition-colors flex items-center space-x-3 cursor-pointer ${activeTab === "users"
                 ? "bg-primary-500 text-white"
                 : "bg-background border border-card-border hover:bg-card-border/30 text-foreground"
