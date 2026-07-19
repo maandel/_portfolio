@@ -26,7 +26,7 @@ async def login(
         tokens = await use_cases.login(user_data.email, user_data.password)
         response.set_cookie(
             key="admin_token",
-            value=tokens.access_token,
+            value=tokens["access_token"],
             httponly=True,
             secure=True,
             samesite="lax",

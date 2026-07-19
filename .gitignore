@@ -8,3 +8,4 @@ dist/
 build/
 *.log
 secrets_seed.txt
+.agents/
