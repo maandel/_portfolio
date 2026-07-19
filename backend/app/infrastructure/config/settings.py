@@ -54,6 +54,12 @@ class Settings(BaseSettings):
             return self.SMTP_USE_SSL
         return self.SMTP_PORT == 465
 
+    @property
+    def ACTIVE_COOKIE_DOMAIN(self) -> str | None:
+        if "mandell.tech" in self.ALLOWED_ORIGINS:
+            return ".mandell.tech"
+        return None
+
     @model_validator(mode="after")
     def configure_services(self) -> "Settings":
         # 1. Clean up placeholder BREVO_API_KEY if present
