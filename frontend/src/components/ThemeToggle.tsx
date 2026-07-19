@@ -8,8 +8,7 @@ export default function ThemeToggle() {
 
   useEffect(() => {
     const savedTheme = localStorage.getItem("theme") as "light" | "dark" | null;
-    const systemTheme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
-    const initialTheme = savedTheme || systemTheme || "dark";
+    const initialTheme = savedTheme || "dark";
 
     // eslint-disable-next-line
     setTheme(initialTheme);
